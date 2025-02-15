@@ -12,11 +12,14 @@
     "@react-native-async-storage/async-storage": "1.23.1",
     "@rneui/themed": "^4.0.0-rc.8",
     "@supabase/supabase-js": "^2.48.1",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
     "expo": "~52.0.35",
+    "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
+    "node-cron": "^3.0.3",
     "react": "18.3.1",
-    "react-native": "0.76.7",
-    "expo-image-picker": "~16.0.6"
+    "react-native": "0.76.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

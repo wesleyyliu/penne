@@ -81,14 +81,14 @@ export default function Account({ session }: { session: Session }) {
   return (
     <View style={styles.container}>
         <View>
-        <Avatar
-            size={200}
-            url={avatarUrl}
-            onUpload={(url: string) => {
-            setAvatarUrl(url)
-            updateProfile({ username, website, avatar_url: url })
-            }}
-        />
+            <Avatar
+                size={200}
+                url={avatarUrl}
+                onUpload={(url: string) => {
+                setAvatarUrl(url)
+                updateProfile({ username, website, avatar_url: url })
+                }}
+            />
         </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Input label="Email" value={session?.user?.email} disabled />
