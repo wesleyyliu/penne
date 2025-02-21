@@ -13,7 +13,7 @@ async function scrapeData() {
         // Object to hold the structured menu data
         const menuData = {};
 
-        // Select each menu section
+        // Select each menu section (ex. breakfast, lunch, dinner, etc.)
         $('.panel.s-wrapper.site-panel.site-panel--daypart').each((index, sectionElement) => {
             // Extract the meal title from the header
             const mealTitle = $(sectionElement).find('h2.panel__title.site-panel__daypart-panel-title').text().trim();
@@ -22,25 +22,20 @@ async function scrapeData() {
             // Find the wrapper that contains stations and dishes
             const daypartWrapper = $(sectionElement).find('div.site-panel__daypart-wrapper');
             const daypartWrapper1 = daypartWrapper.find('div.site-panel__daypart-tabs');
-            const daypartWrapper2 = daypartWrapper1.find('div.c-tabs  ');
-            const daypartWrapper3 = daypartWrapper2.find('div.c-tab__content-inner site-panel__daypart-tab-content-inner');
+            const daypartWrapper2 = daypartWrapper1.find('div.c-tabs');
+            const daypartWrapper3 = daypartWrapper2.find('div.c-tab__content-inner.site-panel__daypart-tab-content-inner').first(); // Only get first because we only want specials, not condiments and extras
 
             // Variable to keep track of the current station title
             let currentStationTitle = '';
 
-            // Iterate through all relevant divs
+            // This finds all the stations and dishes (since sometimes dishes are not inside the station for whatever reason)
             daypartWrapper3.find('div.station-title-inline-block, div.site-panel__daypart-item').each((index, itemElement) => {
-                // Check if the current div is a station title
+                // If it is a station inline block, we just extract the station title
                 if ($(itemElement).hasClass('station-title-inline-block')) {
                     // Extract the station title
                     currentStationTitle = $(itemElement).find('h3.site-panel__daypart-station-title').text().trim();
                     menuData[mealTitle][currentStationTitle] = []; // Initialize an array for dishes under this station
 
-                    // Extract dishes from this station's inline block
-                    $(itemElement).find('div.site-panel__daypart-item button.h4.site-panel__daypart-item-title').each((dishIndex, dishElement) => {
-                        const dishName = $(dishElement).text().trim(); // Get the dish name
-                        menuData[mealTitle][currentStationTitle].push(dishName); // Add the dish name to the array
-                    });
                 } else if ($(itemElement).hasClass('site-panel__daypart-item')) {
                     // If it's a dish item and we have a current station, extract the dish name
                     if (currentStationTitle) {
@@ -54,7 +49,7 @@ async function scrapeData() {
         });
 
         // Log the structured menu data
-        console.log(JSON.stringify(menuData, null, 2)); // Pretty print the menu data
+        console.log(JSON.stringify(menuData, null, 2));
 
     } catch (error) {
         console.error('Error scraping data:', error);
