@@ -9,6 +9,7 @@ import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import Auth from './components/Auth';
 import { View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,8 +32,28 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Tab.Navigator>
-        <Tab.Screen name="Dining Halls" component={DiningHallsScreen} />
+      <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          let iconName = '';
+
+          if (route.name === 'Home') {
+            iconName = 'home-outline'; 
+          } else if (route.name === 'Feed') {
+            iconName = 'list-outline';
+          } else if (route.name === 'Leaderboard') {
+            iconName = 'trophy-outline';
+          } else if (route.name === 'Profile') {
+            iconName = 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: 'blue',
+        tabBarInactiveTintColor: 'gray',
+      })}
+    >
+        <Tab.Screen name="Home" component={DiningHallsScreen} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
