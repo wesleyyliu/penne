@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabase'
-import Auth from './components/Auth'
-import Account from './components/Account'
-import { View } from 'react-native'
-import { Session } from '@supabase/supabase-js'
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import DiningHallsScreen from './screens/DiningHallsScreen';
+import FeedScreen from './screens/FeedScreen';
+import LeaderboardScreen from './screens/LeaderboardScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
+import { Session } from '@supabase/supabase-js';
+import Auth from './components/Auth';
+import { View } from 'react-native';
+
+const Tab = createBottomTabNavigator();
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -18,9 +25,18 @@ export default function App() {
     })
   }, [])
 
+  if (!(session && session.user)) {
+    return <Auth />;
+  }
+
   return (
-    <View>
-      {session && session.user ? <Account key={session.user.id} session={session} /> : <Auth />}
-    </View>
-  )
+    <NavigationContainer>
+      <Tab.Navigator>
+        <Tab.Screen name="Dining Halls" component={DiningHallsScreen} />
+        <Tab.Screen name="Feed" component={FeedScreen} />
+        <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
 }
