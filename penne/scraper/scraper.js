@@ -1,11 +1,12 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const fs = require('fs');
 const cron = require('node-cron');
 
 // Function to scrape data from the website
-async function scrapeData() {
+async function scrapeData(url) {
     try {
-        const response = await axios.get('https://university-of-pennsylvania.cafebonappetit.com/cafe/hill-house/'); // Replace with the target URL
+        const response = await axios.get(url);
         const html = response.data;
 
         const $ = cheerio.load(html);
@@ -56,7 +57,14 @@ async function scrapeData() {
     }
 }
 
-scrapeData();
+async function main() {
+    const urls = JSON.parse(fs.readFileSync('./scraper/urls.json')).urls;
+    for (const url of urls) {
+        await scrapeData(url);
+    }
+}
+
+main();
 
 // // Schedule the scraper to run at specific times
 // cron.schedule('0 9,12,15 * * *', () => { // Runs at 9 AM, 12 PM, and 3 PM every day
