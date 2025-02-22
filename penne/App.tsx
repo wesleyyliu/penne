@@ -70,7 +70,7 @@ export default function App() {
         <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Profile" component={() => <ProfileScreen session={session}/>} /> 
       </Tab.Navigator>
     </NavigationContainer>
   );
