@@ -103,7 +103,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
         )}
       </View>
 
-      {/* ✅ SURVEY POPUP WITH SLIDER ✅ */}
+      {/* SURVEY POPUP WITH SLIDER */}
       <Modal visible={surveyVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -188,6 +188,9 @@ const styles = StyleSheet.create({
   reactions: { flexDirection: 'row' },
   like: { marginRight: 15, color: 'black' },
   dislike: { color: 'black' },
+
+  // No Menu Text Style
+  noMenu: { fontSize: 16, textAlign: 'center', marginVertical: 10, color: 'gray' },
 
   // Modal Styles
   modalContainer: {
