@@ -7,9 +7,10 @@ interface Props {
   size: number
   url: string | null
   onUpload: (filePath: string) => void
+  upload: boolean
 }
 
-export default function Avatar({ url, size = 150, onUpload }: Props) {
+export default function Avatar({ url, size = 150, onUpload, upload }: Props) {
   const [uploading, setUploading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const avatarSize = { height: size, width: size }
@@ -94,25 +95,26 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
         <Image
           source={{ uri: avatarUrl }}
           accessibilityLabel="Avatar"
-          style={[avatarSize, styles.avatar, styles.image]}
+          style={[avatarSize, styles.image, { borderRadius: size / 2 }]}
         />
       ) : (
-        <View style={[avatarSize, styles.avatar, styles.noImage]} />
+        <View style={[avatarSize, styles.avatar, styles.noImage, { borderRadius: size / 2 }]} />
       )}
-      <View>
-        <Button
-          title={uploading ? 'Uploading ...' : 'Upload'}
-          onPress={uploadAvatar}
-          disabled={uploading}
-        />
-      </View>
+      {upload && (
+        <View>
+          <Button
+            title={uploading ? 'Uploading ...' : 'Upload'}
+            onPress={uploadAvatar}
+            disabled={uploading}
+          />
+        </View>
+      )}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   avatar: {
-    borderRadius: 5,
     overflow: 'hidden',
     maxWidth: '100%',
   },

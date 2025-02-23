@@ -5,7 +5,7 @@ import DiningHallsScreen from './screens/DiningHallsScreen';
 import DiningHallDetailScreen from './screens/DiningHallDetail';
 import FeedScreen from './screens/FeedScreen';
 import LeaderboardScreen from './screens/LeaderboardScreen';
-import ProfileScreen from './screens/ProfileScreen';
+import ProfileStack from './screens/ProfileStack';
 import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -70,8 +70,9 @@ export default function App() {
         <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-        <Tab.Screen name="Profile" component={() => <ProfileScreen session={session}/>} /> 
+        <Tab.Screen name="Profile" component={() => <ProfileStack session={session}/>} options={{ headerShown: false }} /> 
       </Tab.Navigator>
     </NavigationContainer>
   );
 }
+//() => <ProfileScreen session={session}/>

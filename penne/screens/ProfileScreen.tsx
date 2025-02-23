@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert } from 'react-native'
-import { Button, Input } from '@rneui/themed'
+import { StyleSheet, View, Alert, Text, TouchableOpacity } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import Avatar from './Avatar'
+import { useRoute } from '@react-navigation/native'
 
-export default function ProfileScreen({ session }: { session: Session }) {
+export default function ProfileScreen({ navigation }: { navigation: any }) {
+  const route = useRoute()
+  const { session } = route.params
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
-  const [website, setWebsite] = useState('')
+  const [fullName, setFullName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function ProfileScreen({ session }: { session: Session }) {
 
       const { data, error, status } = await supabase
         .from('profiles')
-        .select(`username, website, avatar_url`)
+        .select(`username, full_name, avatar_url`)
         .eq('id', session?.user.id)
         .single()
 
@@ -32,7 +34,7 @@ export default function ProfileScreen({ session }: { session: Session }) {
 
       if (data) {
         setUsername(data.username)
-        setWebsite(data.website)
+        setFullName(data.full_name)
         setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
@@ -45,73 +47,26 @@ export default function ProfileScreen({ session }: { session: Session }) {
     }
   }
 
-  async function updateProfile({
-    username,
-    website,
-    avatar_url,
-  }: {
-    username: string
-    website: string
-    avatar_url: string
-  }) {
-    try {
-      setLoading(true)
-      if (!session?.user) throw new Error('No user on the session!')
-
-      const updates = {
-        id: session?.user.id,
-        username,
-        website,
-        avatar_url,
-        updated_at: new Date(),
-      }
-
-      const { error } = await supabase.from('profiles').upsert(updates)
-
-      if (error) {
-        throw error
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <View style={styles.container}>
+      <View style={styles.userInfoContainer}>
+        <Text style={styles.fullName}>{fullName}</Text>
+      </View>
       <View style={styles.avatarContainer}>
-        <Avatar
-          size={200}
-          url={avatarUrl}
-          onUpload={(url: string) => {
-            setAvatarUrl(url)
-            updateProfile({ username, website, avatar_url: url })
-          }}
-        />
+        <Avatar size={100} url={avatarUrl} onUpload={() => {}} upload={false} />
       </View>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={session?.user?.email} disabled />
+      <View style={styles.userInfoContainer}>
+        <Text style={styles.username}>@{username}</Text>
       </View>
-      <View style={styles.verticallySpaced}>
-        <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Input label="Website" value={website || ''} onChangeText={(text) => setWebsite(text)} />
-      </View>
-
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button
-          title={loading ? 'Loading ...' : 'Update'}
-          onPress={() => updateProfile({ username, website, avatar_url: avatarUrl })}
-          disabled={loading}
-        />
-      </View>
-
-      <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={() => navigation.navigate('EditProfile', { session })}>
+          <Text style={styles.buttonText}>Edit Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Share Profile</Text>
+        </TouchableOpacity>
       </View>
     </View>
   )
@@ -119,19 +74,40 @@ export default function ProfileScreen({ session }: { session: Session }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
-    padding: 12,
-  },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: 'stretch',
-  },
-  mt20: {
     marginTop: 20,
+    padding: 12,
+    alignItems: 'center', // Center align items
   },
   avatarContainer: {
+    marginBottom: 20,
+  },
+  userInfoContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  fullName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  username: {
+    fontSize: 18,
+    color: 'gray',
+  },
+  buttonContainer: {
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    marginTop: 20, 
+  },
+  button: {
+    backgroundColor: '#b0b0b0',
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginHorizontal: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 })

@@ -3,12 +3,15 @@ import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert } from 'react-native'
 import { Button, Input } from '@rneui/themed'
 import { Session } from '@supabase/supabase-js'
-import Avatar from '../screens/Avatar'
+import { useRoute } from '@react-navigation/native';
+import Avatar from './Avatar'
 
-export default function Account({ session }: { session: Session }) {
+export default function EditProfileScreen() {
+  const route = useRoute();
+  const { session } = route.params;
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
-  const [website, setWebsite] = useState('')
+  const [fullName, setFullName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
@@ -22,19 +25,21 @@ export default function Account({ session }: { session: Session }) {
 
       const { data, error, status } = await supabase
         .from('profiles')
-        .select(`username, website, avatar_url`)
+        .select(`username, full_name, avatar_url`)
         .eq('id', session?.user.id)
         .single()
+
       if (error && status !== 406) {
         throw error
       }
 
       if (data) {
         setUsername(data.username)
-        setWebsite(data.website)
+        setFullName(data.full_name)
         setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
+      console.error('Error fetching profile:', error)
       if (error instanceof Error) {
         Alert.alert(error.message)
       }
@@ -45,11 +50,11 @@ export default function Account({ session }: { session: Session }) {
 
   async function updateProfile({
     username,
-    website,
+    full_name,
     avatar_url,
   }: {
     username: string
-    website: string
+    full_name: string
     avatar_url: string
   }) {
     try {
@@ -59,7 +64,7 @@ export default function Account({ session }: { session: Session }) {
       const updates = {
         id: session?.user.id,
         username,
-        website,
+        full_name,
         avatar_url,
         updated_at: new Date(),
       }
@@ -80,30 +85,31 @@ export default function Account({ session }: { session: Session }) {
 
   return (
     <View style={styles.container}>
-        <View>
-            <Avatar
-                size={200}
-                url={avatarUrl}
-                onUpload={(url: string) => {
-                setAvatarUrl(url)
-                updateProfile({ username, website, avatar_url: url })
-                }}
-            />
-        </View>
+      <View style={styles.avatarContainer}>
+        <Avatar
+          size={200}
+          url={avatarUrl}
+          onUpload={(url: string) => {
+            setAvatarUrl(url)
+            updateProfile({ username, fullName, avatar_url: url })
+          }}
+          upload={true}
+        />
+      </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Input label="Email" value={session?.user?.email} disabled />
       </View>
       <View style={styles.verticallySpaced}>
-        <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
+        <Input label="Full Name" value={fullName || ''} onChangeText={(text) => setFullName(text)} />
       </View>
       <View style={styles.verticallySpaced}>
-        <Input label="Website" value={website || ''} onChangeText={(text) => setWebsite(text)} />
+        <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
       </View>
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? 'Loading ...' : 'Update'}
-          onPress={() => updateProfile({ username, website, avatar_url: avatarUrl })}
+          onPress={() => updateProfile({ username, full_name: fullName, avatar_url: avatarUrl })}
           disabled={loading}
         />
       </View>
@@ -127,5 +133,9 @@ const styles = StyleSheet.create({
   },
   mt20: {
     marginTop: 20,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })
