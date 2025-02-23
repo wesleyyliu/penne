@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState } from 'react-native'
+import { Alert, StyleSheet, View, AppState, Image } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { Button, Input } from '@rneui/themed'
 
@@ -48,32 +48,52 @@ export default function Auth() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
+      <Image 
+        source={{ uri: '/Users/wesleyliu/penne/penne/assets/Penne Logo_processed.png' }} // Add your image URL here
+        style={styles.image} // Apply styles for the image
+      />
+      <View style={[styles.verticallySpaced, styles.mt20, styles.inputContainer]}>
         <Input
-          label="Email"
-          leftIcon={{ type: 'font-awesome', name: 'envelope' }}
           onChangeText={(text) => setEmail(text)}
           value={email}
           placeholder="email@address.com"
           autoCapitalize={'none'}
+          containerStyle={styles.inputField} // Apply styles for the input field
+          inputStyle={styles.inputText} // Apply styles for the text input
+          placeholderTextColor="#ffffff"
+          underlineColorAndroid="transparent"
         />
       </View>
-      <View style={styles.verticallySpaced}>
+      <View style={[styles.verticallySpaced, styles.inputContainer]}>
         <Input
-          label="Password"
-          leftIcon={{ type: 'font-awesome', name: 'lock' }}
           onChangeText={(text) => setPassword(text)}
           value={password}
           secureTextEntry={true}
           placeholder="Password"
           autoCapitalize={'none'}
+          containerStyle={styles.inputField} // Apply styles for the input field
+          inputStyle={styles.inputText} // Apply styles for the text input
+          placeholderTextColor="#ffffff"
+          underlineColorAndroid="transparent"
         />
       </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
+        <Button 
+          title="Sign in" 
+          disabled={loading} 
+          onPress={() => signInWithEmail()} 
+          buttonStyle={styles.button} // Apply styles for the button
+          titleStyle={styles.buttonTitle} // Apply styles for the button title
+        />
       </View>
       <View style={styles.verticallySpaced}>
-        <Button title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
+        <Button 
+          title="Sign up" 
+          disabled={loading} 
+          onPress={() => signUpWithEmail()} 
+          buttonStyle={styles.button} // Apply styles for the button
+          titleStyle={styles.buttonTitle} // Apply styles for the button title
+        />
       </View>
     </View>
   )
@@ -81,7 +101,9 @@ export default function Auth() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
+    flex: 1, // Allow the container to take full height
+    justifyContent: 'center', // Center items vertically
+    alignItems: 'center', // Center items horizontally
     padding: 12,
   },
   verticallySpaced: {
@@ -91,5 +113,37 @@ const styles = StyleSheet.create({
   },
   mt20: {
     marginTop: 20,
+  },
+  image: {
+    width: '100%', // Set width as needed
+    height: 200, // Set height as needed
+    resizeMode: 'cover', // Adjust the image scaling
+    marginBottom: 20, // Add some space below the image
+  },
+  inputContainer: {
+    alignItems: 'center', // Center input fields
+    borderWidth: 1, // Add border
+    borderColor: '#ccc', // Border color
+    borderRadius: 50, // Rounded corners
+    backgroundColor: '#fc8c58', // Background color
+    padding: 30, // Padding inside the container
+    marginBottom: 20,
+  },
+  inputField: {
+    backgroundColor: '#fc8c58', // Background color for input fields
+    borderRadius: 50, // Rounded corners
+  },
+  button: {
+    backgroundColor: '#524134', // Change to your desired button color
+    borderRadius: 25, // Rounded corners
+    paddingVertical: 10, // Vertical padding
+    paddingHorizontal: 20, // Horizontal padding
+  },
+  buttonTitle: {
+    color: '#FFFFFF', // Change to your desired text color
+    fontWeight: 'bold', // Optional: make the text bold
+  },
+  inputText: {
+    color: '#ffffff', // Change to your desired text color
   },
 })

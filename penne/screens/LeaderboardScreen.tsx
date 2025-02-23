@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-const DiningHallsScreen = () => {
+const LeaderboardScreen = () => {
   return (
     <View>
-      <Text>Dining Halls</Text>
+      <Text>almost done!</Text>
       {/* Fetch and display dining halls here */}
     </View>
   );
 };
 
-export default DiningHallsScreen;
+export default LeaderboardScreen;
