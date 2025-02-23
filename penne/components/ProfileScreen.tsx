@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert, Text, TouchableOpacity } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import Avatar from './Avatar'
-import { useRoute } from '@react-navigation/native'
+import { useFocusEffect, useRoute } from '@react-navigation/native'
 
 import { RouteProp } from '@react-navigation/native';
 
@@ -18,9 +18,11 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
   const [fullName, setFullName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
-  useEffect(() => {
-    if (session) getProfile()
-  }, [session])
+  useFocusEffect(
+    React.useCallback(() => {
+      if (session) getProfile()
+    }, [session])
+  )
 
   async function getProfile() {
     try {

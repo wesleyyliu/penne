@@ -59,7 +59,12 @@ export default function App() {
         <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-        <Tab.Screen name="Profile" component={() => <ProfileStack session={session}/>} options={{ headerShown: false }} /> 
+        <Tab.Screen 
+          name="Profile" 
+          component={ProfileStack}
+          initialParams={{ session }}
+          options={{ headerShown: false }} 
+        /> 
       </Tab.Navigator>
     </NavigationContainer>
   );
