@@ -6,8 +6,12 @@ import { Session } from '@supabase/supabase-js'
 import Avatar from './Avatar'
 import { useRoute } from '@react-navigation/native'
 
-export default function ProfileScreen({ navigation }: { navigation: any }) {
-  const route = useRoute()
+import { RouteProp } from '@react-navigation/native';
+
+type ProfileScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>;
+
+export default function ProfileScreen({ navigation }: { navigation: any; route: ProfileScreenRouteProp }) {
+  const route = useRoute<ProfileScreenRouteProp>()
   const { session } = route.params
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
