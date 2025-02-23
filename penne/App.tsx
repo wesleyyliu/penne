@@ -1,11 +1,11 @@
+import React from 'react'
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import DiningHallsScreen from './screens/DiningHallsScreen';
-import DiningHallDetailScreen from './screens/DiningHallDetail';
 import FeedScreen from './screens/FeedScreen';
 import LeaderboardScreen from './screens/LeaderboardScreen';
 import ProfileStack from './screens/ProfileStack';
+import HomeStack from './screens/HomeStack';
 import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -14,17 +14,6 @@ import { View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
-
-// ✅ Home Stack for Dining Halls
-function HomeStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Dining Halls" component={DiningHallsScreen} />
-      <Stack.Screen name="DiningHallDetail" component={DiningHallDetailScreen} options={{ title: 'Dining Hall Details' }} />
-    </Stack.Navigator>
-  );
-}
 
 // ✅ Main App Function
 export default function App() {

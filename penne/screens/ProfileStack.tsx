@@ -1,6 +1,7 @@
+import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack';
-import ProfileScreen from './ProfileScreen';
-import EditProfileScreen from './EditProfileScreen';
+import ProfileScreen from '../components/ProfileScreen';
+import EditProfileScreen from '../components/EditProfileScreen';
 import { Session } from '@supabase/supabase-js'
 
 const Stack = createStackNavigator();
