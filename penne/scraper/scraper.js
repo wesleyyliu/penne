@@ -2,6 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const cron = require('node-cron');
+import { supabase } from '../lib/supabase'
 
 // Function to scrape data from the website
 async function scrapeData(url) {
@@ -51,6 +52,34 @@ async function scrapeData(url) {
 
         // Log the structured menu data
         console.log(JSON.stringify(menuData, null, 2));
+
+
+        // Extract dining hall name from URL
+        const diningHallName = url.split('/').slice(-2, -1)[0].replace(/-/g, ' '); // Convert to readable format
+
+        // Insert data into Supabase
+        for (const mealType in menuData) {
+            for (const station in menuData[mealType]) {
+                for (const dish of menuData[mealType][station]) {
+                    const { data, error } = await supabase
+                        .from('menus')
+                        .upsert([
+                            {
+                                dining_hall_id: diningHallName, // You may need to map this to an actual ID
+                                meal_type: mealType,
+                                station: station,
+                                dish: dish,
+                                dish_upvote: 0,
+                                dish_downvote: 0,
+                                created_at: new Date()
+                            }
+                        ]);
+                    if (error) {
+                        console.error('Error inserting data:', error);
+                    }
+                }
+            }
+        }
 
     } catch (error) {
         console.error('Error scraping data:', error);
