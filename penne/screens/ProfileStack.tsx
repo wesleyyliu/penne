@@ -8,14 +8,14 @@ import { useRoute } from '@react-navigation/native'
 const Stack = createStackNavigator();
 
 function ProfileStack() {
-const route = useRoute()
-const { session } = route.params
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="ViewProfile" component={ProfileScreen} options={{ title: 'Profile' }} initialParams={{ session }} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} initialParams={{ session }} />
-    </Stack.Navigator>
-  );
+  const route = useRoute()
+  const { session } = route.params
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="ViewProfile" component={ProfileScreen} options={{ title: 'Profile' }} initialParams={{ session }} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} initialParams={{ session }} />
+      </Stack.Navigator>
+    );
 }
 
 export default ProfileStack;

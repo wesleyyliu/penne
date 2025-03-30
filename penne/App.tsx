@@ -56,7 +56,7 @@ export default function App() {
           tabBarInactiveTintColor: 'gray',
         })}
       >
-        <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
+        <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} initialParams={{ session }}/>
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Tab.Screen 

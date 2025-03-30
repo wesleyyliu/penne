@@ -1,26 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ScrollView, Modal, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ScrollView, Modal, Button, ActivityIndicator } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { RouteProp } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 
-const diningHallMenus: { [key: string]: { name: string; likes: number; dislikes: number }[] } = {
-  '1920 Commons': [
-    { name: 'Pizza', likes: 220, dislikes: 50 },
-    { name: 'Pasta', likes: 180, dislikes: 40 },
-    { name: 'Salad', likes: 150, dislikes: 30 },
-  ],
-  'Hill House': [
-    { name: 'Burgers', likes: 250, dislikes: 60 },
-    { name: 'Fries', likes: 300, dislikes: 70 },
-    { name: 'Grilled Chicken', likes: 220, dislikes: 50 },
-  ],
-  'Quaker Kitchen': [
-    { name: 'Mango-glazed chicken thigh', likes: 200, dislikes: 100 },
-    { name: 'Vegan Tacos', likes: 180, dislikes: 40 },
-    { name: 'Lentil Soup', likes: 160, dislikes: 30 },
-    { name: 'Rice Bowls', likes: 200, dislikes: 50 },
-  ],
-};
+// Define types for menu data
+interface MenuItem {
+  id: number;
+  dish: string;
+  dish_upvote: number;
+  dish_downvote: number;
+  meal_type: string;
+  station: string;
+}
 
 const userPhotos = [
   { id: 'p1', uri: 'https://via.placeholder.com/100' },
@@ -32,16 +24,221 @@ const userPhotos = [
 type RouteParams = {
   params: {
     hallName: string;
+    session: any;
   };
 };
 
 const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'params'> }) => {
-  const { hallName } = route.params;
-  const menuItems = diningHallMenus[hallName] || [];
+  const { hallName, session } = route.params;
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Add state to track user votes
+  const [userVotes, setUserVotes] = useState<Record<number, {upvoted: boolean, downvoted: boolean}>>({});
 
   // 🔥 State for Survey Modal & Rating
   const [surveyVisible, setSurveyVisible] = useState(false);
   const [rating, setRating] = useState(5); // Default rating is 5
+
+  // Fetch menu data from Supabase
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      try {
+        setLoading(true);
+        
+        // Query the menus table for items matching the dining hall name
+        const { data, error } = await supabase
+          .from('menus')
+          .select('*')
+          .eq('dining_hall_name', hallName);
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setMenuItems(data);
+        }
+      } catch (err) {
+        console.error('Error fetching menu data:', err);
+        setError('Failed to load menu items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenuData();
+  }, [hallName]);
+
+  // Function to handle upvoting a dish
+  const handleUpvote = async (itemId: number) => {
+    try {
+      // Check if user already voted on this item
+      const currentVote = userVotes[itemId] || { upvoted: false, downvoted: false };
+      
+      // If already upvoted, remove upvote
+      if (currentVote.upvoted) {
+        // Update local state
+        setMenuItems(prevItems => 
+          prevItems.map(item => 
+            item.id === itemId 
+              ? {...item, dish_upvote: item.dish_upvote - 1} 
+              : item
+          )
+        );
+        
+        // Update vote tracking
+        setUserVotes(prev => ({
+          ...prev,
+          [itemId]: { ...currentVote, upvoted: false }
+        }));
+        
+        // Update in database
+        await supabase.rpc('decrement_dish_upvote', { dish_id: itemId });
+      } else {
+        // Create local state updates first
+        let updatedItem;
+        setMenuItems(prevItems => {
+          const newItems = prevItems.map(item => {
+            if (item.id === itemId) {
+              // Apply all changes to the item at once
+              updatedItem = {
+                ...item,
+                dish_upvote: item.dish_upvote + 1,
+                // If previously downvoted, remove the downvote
+                dish_downvote: currentVote.downvoted ? item.dish_downvote - 1 : item.dish_downvote
+              };
+              return updatedItem;
+            }
+            return item;
+          });
+          return newItems;
+        });
+        
+        // Update vote tracking (do this immediately)
+        setUserVotes(prev => ({
+          ...prev,
+          [itemId]: { upvoted: true, downvoted: false }
+        }));
+        
+        // Then update the database (these can happen in parallel)
+        const promises = [];
+        promises.push(supabase.rpc('increment_dish_upvote', { dish_id: itemId }));
+        
+        if (currentVote.downvoted) {
+          promises.push(supabase.rpc('decrement_dish_downvote', { dish_id: itemId }));
+        }
+        
+        // Wait for all database updates to complete
+        await Promise.all(promises);
+      }
+    } catch (err) {
+      console.error('Error handling upvote:', err);
+      // Revert optimistic update on error
+      // Consider refreshing data from server here
+    }
+  };
+
+  // Function to handle downvoting a dish
+  const handleDownvote = async (itemId: number) => {
+    try {
+      // Check if user already voted on this item
+      const currentVote = userVotes[itemId] || { upvoted: false, downvoted: false };
+      
+      // If already downvoted, remove downvote
+      if (currentVote.downvoted) {
+        // Update local state
+        setMenuItems(prevItems => 
+          prevItems.map(item => 
+            item.id === itemId 
+              ? {...item, dish_downvote: item.dish_downvote - 1} 
+              : item
+          )
+        );
+        
+        // Update vote tracking
+        setUserVotes(prev => ({
+          ...prev,
+          [itemId]: { ...currentVote, downvoted: false }
+        }));
+        
+        // Update in database
+        await supabase.rpc('decrement_dish_downvote', { dish_id: itemId });
+      } else {
+        // Create local state updates first
+        let updatedItem;
+        setMenuItems(prevItems => {
+          const newItems = prevItems.map(item => {
+            if (item.id === itemId) {
+              // Apply all changes to the item at once
+              updatedItem = {
+                ...item,
+                dish_downvote: item.dish_downvote + 1,
+                // If previously upvoted, remove the upvote
+                dish_upvote: currentVote.upvoted ? item.dish_upvote - 1 : item.dish_upvote
+              };
+              return updatedItem;
+            }
+            return item;
+          });
+          return newItems;
+        });
+        
+        // Update vote tracking (do this immediately)
+        setUserVotes(prev => ({
+          ...prev,
+          [itemId]: { upvoted: false, downvoted: true }
+        }));
+        
+        // Then update the database (these can happen in parallel)
+        const promises = [];
+        promises.push(supabase.rpc('increment_dish_downvote', { dish_id: itemId }));
+        
+        if (currentVote.upvoted) {
+          promises.push(supabase.rpc('decrement_dish_upvote', { dish_id: itemId }));
+        }
+        
+        // Wait for all database updates to complete
+        await Promise.all(promises);
+      }
+    } catch (err) {
+      console.error('Error handling downvote:', err);
+      // Revert optimistic update on error
+    }
+  };
+
+  // // Optional: Load user's previous votes when component mounts
+  // useEffect(() => {
+  //   const loadUserVotes = async () => {
+  //     if (!session?.user) return;
+      
+  //     try {
+  //       const { data, error } = await supabase
+  //         .from('user_votes')
+  //         .select('dish_id, vote_type')
+  //         .eq('user_id', session.user.id);
+          
+  //       if (error) throw error;
+        
+  //       if (data) {
+  //         // Convert array to object format for our userVotes state
+  //         const votesMap: Record<number, {upvoted: boolean, downvoted: boolean}> = {};
+  //         data.forEach(vote => {
+  //           votesMap[vote.dish_id] = {
+  //             upvoted: vote.vote_type === 'upvote',
+  //             downvoted: vote.vote_type === 'downvote'
+  //           };
+  //         });
+  //         setUserVotes(votesMap);
+  //       }
+  //     } catch (err) {
+  //       console.error('Error loading user votes:', err);
+  //     }
+  //   };
+    
+  //   loadUserVotes();
+  // }, [session]);
 
   return (
     <ScrollView style={styles.container}>
@@ -84,20 +281,39 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
 
         {/* Menu Section */}
         <Text style={styles.sectionTitle}>Menu</Text>
-        {menuItems.length > 0 ? (
-          menuItems.map((dish, index) => (
-            <View key={index} style={styles.menuItem}>
-              <Text style={styles.menuText}>{dish.name}</Text>
-              <View style={styles.reactions}>
-                <TouchableOpacity>
-                  <Text style={styles.like}>❤️ {dish.likes}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <Text style={styles.dislike}>👎 {dish.dislikes}</Text>
-                </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : menuItems.length > 0 ? (
+          <View>
+            {menuItems.map((dish, index) => (
+              <View key={index} style={styles.menuItem}>
+                <View style={styles.menuItemDetails}>
+                  <Text style={styles.menuText}>{dish.dish}</Text>
+                  <Text style={styles.menuSubtext}>{dish.meal_type} • {dish.station}</Text>
+                </View>
+                <View style={styles.reactions}>
+                  <TouchableOpacity onPress={() => handleUpvote(dish.id)}>
+                    <Text style={[
+                      styles.like, 
+                      userVotes[dish.id]?.upvoted ? styles.activeVote : null
+                    ]}>
+                      ❤️ {dish.dish_upvote}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDownvote(dish.id)}>
+                    <Text style={[
+                      styles.dislike,
+                      userVotes[dish.id]?.downvoted ? styles.activeVote : null
+                    ]}>
+                      👎 {dish.dish_downvote}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))
+            ))}
+          </View>
         ) : (
           <Text style={styles.noMenu}>No menu available</Text>
         )}
@@ -184,10 +400,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
+  menuItemDetails: {
+    flex: 1,
+  },
   menuText: { fontSize: 16 },
+  menuSubtext: {
+    fontSize: 12, 
+    color: 'gray',
+    marginTop: 2,
+  },
   reactions: { flexDirection: 'row' },
   like: { marginRight: 15, color: 'black' },
   dislike: { color: 'black' },
+  activeVote: { fontWeight: 'bold', color: '#0066cc' },
 
   // No Menu Text Style
   noMenu: { fontSize: 16, textAlign: 'center', marginVertical: 10, color: 'gray' },
@@ -223,6 +448,17 @@ const styles = StyleSheet.create({
   sliderTouch: { flex: 1 },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
+
+  // New or updated styles
+  loader: {
+    marginVertical: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
 });
 
 export default DiningHallDetailScreen;
