@@ -58,7 +58,24 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
         }
         
         if (data) {
-          setMenuItems(data);
+          // Sort the menu items: first by meal_type, then by station, then by dish name
+          const sortedData = [...data].sort((a, b) => {
+            // First, sort by meal_type
+            if (a.meal_type < b.meal_type) return -1;
+            if (a.meal_type > b.meal_type) return 1;
+            
+            // If meal_type is the same, sort by station
+            if (a.station < b.station) return -1;
+            if (a.station > b.station) return 1;
+            
+            // If station is also the same, sort by dish name
+            if (a.dish < b.dish) return -1;
+            if (a.dish > b.dish) return 1;
+            
+            return 0; // If all are equal
+          });
+          
+          setMenuItems(sortedData);
         }
       } catch (err) {
         console.error('Error fetching menu data:', err);
@@ -74,6 +91,8 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
   // Function to handle upvoting a dish
   const handleUpvote = async (itemId: number) => {
     try {
+      if (!session?.user) return; // Make sure user is logged in
+      
       // Check if user already voted on this item
       const currentVote = userVotes[itemId] || { upvoted: false, downvoted: false };
       
@@ -96,6 +115,16 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
         
         // Update in database
         await supabase.rpc('decrement_dish_upvote', { dish_id: itemId });
+        
+        // Update dish_ratings table - set upvote to false
+        await supabase
+          .from('dish_ratings')
+          .upsert({
+            dish_id: itemId,
+            user_id: session.user.id,
+            upvote: false,
+            downvote: currentVote.downvoted
+          });
       } else {
         // Create local state updates first
         let updatedItem;
@@ -116,7 +145,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
           return newItems;
         });
         
-        // Update vote tracking (do this immediately)
+        // Update vote tracking
         setUserVotes(prev => ({
           ...prev,
           [itemId]: { upvoted: true, downvoted: false }
@@ -130,19 +159,32 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
           promises.push(supabase.rpc('decrement_dish_downvote', { dish_id: itemId }));
         }
         
+        // Add/update entry in dish_ratings table
+        promises.push(
+          supabase
+            .from('dish_ratings')
+            .upsert({
+              dish_id: itemId,
+              user_id: session.user.id,
+              upvote: true,
+              downvote: false
+            })
+        );
+        
         // Wait for all database updates to complete
         await Promise.all(promises);
       }
     } catch (err) {
       console.error('Error handling upvote:', err);
       // Revert optimistic update on error
-      // Consider refreshing data from server here
     }
   };
 
   // Function to handle downvoting a dish
   const handleDownvote = async (itemId: number) => {
     try {
+      if (!session?.user) return; // Make sure user is logged in
+      
       // Check if user already voted on this item
       const currentVote = userVotes[itemId] || { upvoted: false, downvoted: false };
       
@@ -165,6 +207,16 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
         
         // Update in database
         await supabase.rpc('decrement_dish_downvote', { dish_id: itemId });
+        
+        // Update dish_ratings table - set downvote to false
+        await supabase
+          .from('dish_ratings')
+          .upsert({
+            dish_id: itemId,
+            user_id: session.user.id,
+            upvote: currentVote.upvoted,
+            downvote: false
+          });
       } else {
         // Create local state updates first
         let updatedItem;
@@ -185,7 +237,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
           return newItems;
         });
         
-        // Update vote tracking (do this immediately)
+        // Update vote tracking
         setUserVotes(prev => ({
           ...prev,
           [itemId]: { upvoted: false, downvoted: true }
@@ -199,6 +251,18 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
           promises.push(supabase.rpc('decrement_dish_upvote', { dish_id: itemId }));
         }
         
+        // Add/update entry in dish_ratings table
+        promises.push(
+          supabase
+            .from('dish_ratings')
+            .upsert({
+              dish_id: itemId,
+              user_id: session.user.id,
+              upvote: false,
+              downvote: true
+            })
+        );
+        
         // Wait for all database updates to complete
         await Promise.all(promises);
       }
@@ -208,37 +272,51 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
     }
   };
 
-  // // Optional: Load user's previous votes when component mounts
-  // useEffect(() => {
-  //   const loadUserVotes = async () => {
-  //     if (!session?.user) return;
+  // Load user's previous votes when component mounts
+  useEffect(() => {
+    const loadUserVotes = async () => {
+      if (!session?.user) return;
       
-  //     try {
-  //       const { data, error } = await supabase
-  //         .from('user_votes')
-  //         .select('dish_id, vote_type')
-  //         .eq('user_id', session.user.id);
+      try {
+        const { data, error } = await supabase
+          .from('dish_ratings')
+          .select('dish_id, upvote, downvote')
+          .eq('user_id', session.user.id);
           
-  //       if (error) throw error;
+        if (error) throw error;
         
-  //       if (data) {
-  //         // Convert array to object format for our userVotes state
-  //         const votesMap: Record<number, {upvoted: boolean, downvoted: boolean}> = {};
-  //         data.forEach(vote => {
-  //           votesMap[vote.dish_id] = {
-  //             upvoted: vote.vote_type === 'upvote',
-  //             downvoted: vote.vote_type === 'downvote'
-  //           };
-  //         });
-  //         setUserVotes(votesMap);
-  //       }
-  //     } catch (err) {
-  //       console.error('Error loading user votes:', err);
-  //     }
-  //   };
+        if (data) {
+          // Convert array to object format for our userVotes state
+          const votesMap: Record<number, {upvoted: boolean, downvoted: boolean}> = {};
+          data.forEach(vote => {
+            votesMap[vote.dish_id] = {
+              upvoted: vote.upvote,
+              downvoted: vote.downvote
+            };
+          });
+          setUserVotes(votesMap);
+        }
+      } catch (err) {
+        console.error('Error loading user votes:', err);
+      }
+    };
     
-  //   loadUserVotes();
-  // }, [session]);
+    loadUserVotes();
+  }, [session]);
+
+    // Function to handle downvoting a dish
+    const handleRating = async () => {
+      try {
+        if (!session?.user) return; // Make sure user is logged in
+        await supabase.from('dining_hall_ratings').upsert({
+          dining_hall_name: hallName,
+          user_id: session.user.id,
+          score: rating
+        });
+      } catch (err) {
+        console.error('Error handling rating:', err);
+      }
+    };
 
   return (
     <ScrollView style={styles.container}>
@@ -336,6 +414,9 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
                 />
               </View>
 
+              {/* Rating number display */}
+              <Text style={styles.ratingText}>{rating}/10</Text>
+
               {/* Slider Interaction (Touchable) */}
               <View style={styles.sliderTouchArea}>
                 {[...Array(11)].map((_, i) => (
@@ -354,6 +435,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
                 title="Submit"
                 onPress={() => {
                   console.log(`Submitted rating: ${rating}/10`);
+                  handleRating();
                   setSurveyVisible(false);
                 }}
               />
@@ -443,6 +525,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'blue',
     position: 'absolute',
     top: -7,
+  },
+  ratingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 25,
+    color: 'blue',
   },
   sliderTouchArea: { flexDirection: 'row', width: '100%', height: 30, position: 'absolute' },
   sliderTouch: { flex: 1 },
