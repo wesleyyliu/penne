@@ -12,8 +12,8 @@ type DiningHallsScreenNavigationProp = StackNavigationProp<
 const diningHalls = [
   { id: '1', name: '1920 Commons' },
   { id: '2', name: 'Hill House' },
-  { id: '3', name: 'English House' },
-  { id: '4', name: 'Falk Kosher Dining' },
+  { id: '3', name: 'Kings Court English House' },
+  { id: '4', name: 'Falk Dining Commons' },
   { id: '5', name: 'Lauder College House' },
   { id: '6', name: 'Quaker Kitchen' },
 ];
