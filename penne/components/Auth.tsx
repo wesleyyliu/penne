@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState, Image } from 'react-native'
+import { Alert, StyleSheet, View, AppState, Image, Text, TouchableOpacity } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { Button, Input } from '@rneui/themed'
+import CheckerboardBackground from './CheckerboardBackground'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -47,103 +48,133 @@ export default function Auth() {
   }
 
   return (
-    <View style={styles.container}>
-      <Image 
-        source={{ uri: '/Users/wesleyliu/penne/penne/assets/Penne Logo_processed.png' }} // Add your image URL here
-        style={styles.image} // Apply styles for the image
-      />
-      <View style={[styles.verticallySpaced, styles.mt20, styles.inputContainer]}>
-        <Input
-          onChangeText={(text) => setEmail(text)}
-          value={email}
-          placeholder="email@address.com"
-          autoCapitalize={'none'}
-          containerStyle={styles.inputField} // Apply styles for the input field
-          inputStyle={styles.inputText} // Apply styles for the text input
-          placeholderTextColor="#ffffff"
-          underlineColorAndroid="transparent"
-        />
+    <CheckerboardBackground>
+      <View style={styles.container}>
+        <View style={styles.authCard}>
+          <Image 
+            source={require('../assets/penne_logo.png')}
+            style={styles.logo}
+          />
+          
+          <Input
+            onChangeText={(text) => setEmail(text)}
+            value={email}
+            placeholder="Username"
+            autoCapitalize={'none'}
+            containerStyle={styles.inputField}
+            inputStyle={styles.inputText}
+            placeholderTextColor="#B8B8B8"
+          />
+          
+          <Input
+            onChangeText={(text) => setPassword(text)}
+            value={password}
+            secureTextEntry={true}
+            placeholder="Password"
+            autoCapitalize={'none'}
+            containerStyle={styles.inputField}
+            inputStyle={styles.inputText}
+            placeholderTextColor="#B8B8B8"
+          />
+          
+          <TouchableOpacity style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          </TouchableOpacity>
+          
+          <Button 
+            title="Log In" 
+            disabled={loading} 
+            onPress={() => signInWithEmail()} 
+            buttonStyle={styles.loginButton}
+            titleStyle={styles.buttonTitle}
+            containerStyle={styles.buttonContainer}
+          />
+          
+          <View style={styles.signupContainer}>
+            <Text style={styles.noAccountText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => signUpWithEmail()}>
+              <Text style={styles.signupText}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
-      <View style={[styles.verticallySpaced, styles.inputContainer]}>
-        <Input
-          onChangeText={(text) => setPassword(text)}
-          value={password}
-          secureTextEntry={true}
-          placeholder="Password"
-          autoCapitalize={'none'}
-          containerStyle={styles.inputField} // Apply styles for the input field
-          inputStyle={styles.inputText} // Apply styles for the text input
-          placeholderTextColor="#ffffff"
-          underlineColorAndroid="transparent"
-        />
-      </View>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button 
-          title="Sign in" 
-          disabled={loading} 
-          onPress={() => signInWithEmail()} 
-          buttonStyle={styles.button} // Apply styles for the button
-          titleStyle={styles.buttonTitle} // Apply styles for the button title
-        />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Button 
-          title="Sign up" 
-          disabled={loading} 
-          onPress={() => signUpWithEmail()} 
-          buttonStyle={styles.button} // Apply styles for the button
-          titleStyle={styles.buttonTitle} // Apply styles for the button title
-        />
-      </View>
-    </View>
+    </CheckerboardBackground>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Allow the container to take full height
-    justifyContent: 'center', // Center items vertically
-    alignItems: 'center', // Center items horizontally
-    padding: 12,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: 'stretch',
+  authCard: {
+    width: '100%',
+    height: '70%',
+    backgroundColor: '#fef8f0',
+    borderRadius: 30,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  mt20: {
-    marginTop: 20,
-  },
-  image: {
-    width: '100%', // Set width as needed
-    height: 200, // Set height as needed
-    resizeMode: 'cover', // Adjust the image scaling
-    marginBottom: 20, // Add some space below the image
-  },
-  inputContainer: {
-    alignItems: 'center', // Center input fields
-    borderWidth: 1, // Add border
-    borderColor: '#ccc', // Border color
-    borderRadius: 50, // Rounded corners
-    backgroundColor: '#fc8c58', // Background color
-    padding: 30, // Padding inside the container
-    marginBottom: 20,
+  logo: {
+    width: 275,
+    height: 150,
+    resizeMode: 'contain',
+    marginTop: 30,
+    marginBottom: 10,
   },
   inputField: {
-    backgroundColor: '#fc8c58', // Background color for input fields
-    borderRadius: 50, // Rounded corners
-  },
-  button: {
-    backgroundColor: '#524134', // Change to your desired button color
-    borderRadius: 25, // Rounded corners
-    paddingVertical: 10, // Vertical padding
-    paddingHorizontal: 20, // Horizontal padding
-  },
-  buttonTitle: {
-    color: '#FFFFFF', // Change to your desired text color
-    fontWeight: 'bold', // Optional: make the text bold
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 50,
+    marginVertical: 10,
+    paddingHorizontal: 10,
+    height: 50,
   },
   inputText: {
-    color: '#ffffff', // Change to your desired text color
+    color: '#333',
+    fontSize: 16,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: '#f8ab7f', 
+    fontSize: 14,
+  },
+  buttonContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
+  loginButton: {
+    backgroundColor: '#f8ab7f', 
+    borderRadius: 30,
+    paddingVertical: 15,
+  },
+  buttonTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  noAccountText: {
+    color: '#666',
+    marginRight: 5,
+  },
+  signupText: {
+    color: '#f8ab7f',
+    fontWeight: 'bold',
   },
 })
