@@ -51,7 +51,7 @@ const CheckerboardBackground: React.FC<CheckerboardBackgroundProps> = ({ childre
       
       {/* Peach to gray gradient overlay */}
       <LinearGradient
-        colors={['rgba(255, 255, 255, 0.57)', 'rgba(210, 183, 159, 0.71)', 'rgba(36, 27, 16, 0.63)']}
+        colors={['rgba(247, 229, 217, 0.38)', 'rgba(210, 183, 159, 0.71)', 'rgba(36, 27, 16, 0.63)']}
         style={styles.gradient}
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}

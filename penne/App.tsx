@@ -52,18 +52,19 @@ export default function App() {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: 'blue',
+          tabBarActiveTintColor: '#E28D61', // Orange color to match the app theme
           tabBarInactiveTintColor: 'gray',
+          tabBarShowLabel: false, // This removes the text labels from the footer tabs
+          headerShown: false, // This removes headers from all tab screens
         })}
       >
-        <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} initialParams={{ session }}/>
+        <Tab.Screen name="Home" component={HomeStack} initialParams={{ session }} />
         <Tab.Screen name="Feed" component={FeedScreen} />
-        <Tab.Screen name="Leaderboard" component={LeaderboardScreen} initialParams={{ session }}/>
+        <Tab.Screen name="Leaderboard" component={LeaderboardScreen} initialParams={{ session }} />
         <Tab.Screen 
           name="Profile" 
           component={ProfileStack}
           initialParams={{ session }}
-          options={{ headerShown: false }} 
         /> 
       </Tab.Navigator>
     </NavigationContainer>

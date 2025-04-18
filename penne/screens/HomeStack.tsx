@@ -10,9 +10,13 @@ function HomeStack() {
   const route = useRoute()
   const { session } = route.params
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Dining Halls" component={DiningHallsScreen} />
-      <Stack.Screen name="DiningHallDetail" component={DiningHallDetailScreen} options={{ title: 'Dining Hall Details' }} initialParams={{ session }} />
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false, // removes the page name on top across all screens in this stack
+      }}
+    >
+      <Stack.Screen name="Dining Halls" component={DiningHallsScreen} initialParams={{ session }} />
+      <Stack.Screen name="DiningHallDetail" component={DiningHallDetailScreen} initialParams={{ session }} />
     </Stack.Navigator>
   );
 }
