@@ -76,7 +76,7 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
             <View style={styles.cardHeader}>
               <View style={styles.headerContent}>
                 <Image 
-                  source={require('../assets/234.png')}
+                  source={require('../assets/kei.png')}
                   style={styles.headerImage}
                   resizeMode="contain"
                 />
@@ -85,17 +85,20 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
             </View>
 
             <View style={styles.cardBody}>
-              <View style={styles.userInfo}>
-                <View>
-                  <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
-                  <Text style={styles.userHandle}>@{username || 'username'}</Text>
-                </View>
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberLabel}>Member since:</Text>
-                  <Text style={styles.memberDate}>{memberSince}</Text>
-                </View>
+              <View style={styles.profileImageContainer}>
+                {avatarUrl ? (
+                  <Image
+                    source={{ uri: avatarUrl }}
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <Image
+                    source={require('../assets/kei.png')}
+                    style={styles.profileImage}
+                  />
+                )}
               </View>
-              
+
               <View style={styles.patternContainer}>
                 <View style={styles.patternRow}>
                   {[...Array(5)].map((_, i) => (
@@ -116,6 +119,17 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
                       resizeMode="contain"
                     />
                   ))}
+                </View>
+              </View>
+              
+              <View style={styles.userInfo}>
+                <View>
+                  <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
+                  <Text style={styles.userHandle}>@{username || 'username'}</Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberLabel}>Member since:</Text>
+                  <Text style={styles.memberDate}>{memberSince}</Text>
                 </View>
               </View>
             </View>
@@ -220,13 +234,40 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#F3E8FF',
     position: 'relative',
-    minHeight: 120,
+    minHeight: 160,
+  },
+  profileImageContainer: {
+    position: 'absolute',
+    left: 24,
+    top: 24,
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
+    zIndex: 2,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  placeholderImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e5e7eb',
   },
   userInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     zIndex: 1,
+    marginTop: 100,
   },
   userName: {
     fontSize: 32,

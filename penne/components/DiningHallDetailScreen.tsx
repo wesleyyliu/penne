@@ -322,7 +322,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
     <ScrollView style={styles.container}>
       {/* Header with Image */}
       <View style={styles.headerContainer}>
-        <Image source={{ uri: 'https://via.placeholder.com/500x250' }} style={styles.headerImage} />
+        <Image source={require('../assets/quaker_kitchen.jpg')} style={styles.headerImage} />
 
         {/* Floating Icons */}
         <View style={styles.floatingIcons}>
@@ -373,20 +373,26 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
                 </View>
                 <View style={styles.reactions}>
                   <TouchableOpacity onPress={() => handleUpvote(dish.id)}>
-                    <Text style={[
-                      styles.like, 
-                      userVotes[dish.id]?.upvoted ? styles.activeVote : null
-                    ]}>
-                      ❤️ {dish.dish_upvote}
-                    </Text>
+                    <View style={styles.reactionButton}>
+                      <Ionicons name="heart-outline" size={18} color={userVotes[dish.id]?.upvoted ? "#E28D61" : "black"} />
+                      <Text style={[
+                        styles.like, 
+                        userVotes[dish.id]?.upvoted ? styles.activeVote : null
+                      ]}>
+                        {dish.dish_upvote}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDownvote(dish.id)}>
-                    <Text style={[
-                      styles.dislike,
-                      userVotes[dish.id]?.downvoted ? styles.activeVote : null
-                    ]}>
-                      👎 {dish.dish_downvote}
-                    </Text>
+                    <View style={styles.reactionButton}>
+                      <Ionicons name="thumbs-down-outline" size={18} color={userVotes[dish.id]?.downvoted ? "#E28D61" : "black"} />
+                      <Text style={[
+                        styles.dislike,
+                        userVotes[dish.id]?.downvoted ? styles.activeVote : null
+                      ]}>
+                        {dish.dish_downvote}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -478,23 +484,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#f0f0f0',
+    marginHorizontal: 8,
   },
   menuItemDetails: {
     flex: 1,
   },
-  menuText: { fontSize: 16 },
+  menuText: { 
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#55574B',
+  },
   menuSubtext: {
     fontSize: 12, 
     color: 'gray',
     marginTop: 2,
   },
-  reactions: { flexDirection: 'row' },
-  like: { marginRight: 15, color: 'black' },
-  dislike: { color: 'black' },
-  activeVote: { fontWeight: 'bold', color: '#0066cc' },
+  reactions: { 
+    flexDirection: 'row',
+    gap: 10, 
+  },
+  reactionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  like: { 
+    marginLeft: 5,
+    fontWeight: '500',
+  },
+  dislike: { 
+    marginLeft: 5,
+    fontWeight: '500',
+  },
+  activeVote: { 
+    fontWeight: 'bold', 
+    color: '#E28D61'
+  },
 
   // No Menu Text Style
   noMenu: { fontSize: 16, textAlign: 'center', marginVertical: 10, color: 'gray' },
