@@ -37,7 +37,7 @@ export default function App() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route }) => ({
-          tabBarIcon: ({ color, size }) => {
+          tabBarIcon: ({ focused, color, size }) => {
             let iconName = '';
 
             if (route.name === 'Home') {
@@ -50,12 +50,45 @@ export default function App() {
               iconName = 'person-outline';
             }
 
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return (
+              <View style={{
+                backgroundColor: focused ? '#fed7aa' : 'transparent',
+                borderRadius: 12,
+                padding: 5,
+                width: size + 10,
+                height: size + 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Ionicons name={iconName} size={size - 2} color={color} />
+              </View>
+            );
           },
           tabBarActiveTintColor: '#E28D61', // Orange color to match the app theme
-          tabBarInactiveTintColor: 'gray',
+          tabBarInactiveTintColor: '#8c8c8c',
           tabBarShowLabel: false, // This removes the text labels from the footer tabs
           headerShown: false, // This removes headers from all tab screens
+          tabBarStyle: {
+            backgroundColor: '#fef8f0',
+            borderTopWidth: 0,
+            elevation: 0,
+            height: 60,
+            width: '100%',
+            borderRadius: 20,
+            marginBottom: 0,
+            position: 'absolute',
+            shadowColor: '#000',
+            shadowOffset: { 
+              width: 0, 
+              height: 2 
+            },
+            shadowOpacity: 0.8,
+            shadowRadius: 5,
+          },
+          tabBarItemStyle: {
+            marginTop: 5,
+            padding: 5,
+          }
         })}
       >
         <Tab.Screen name="Home" component={HomeStack} initialParams={{ session }} />

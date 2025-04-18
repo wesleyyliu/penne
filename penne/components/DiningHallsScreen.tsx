@@ -74,15 +74,15 @@ const DiningHallsScreen = ({ route }) => {
   const getRankNumberColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return '#f06d20'; // White for #1
+        return '#f06d20';
       case 2:
-        return '#fe9d6d'; // White for #2
+        return '#fe9d6d';
       case 3:
-        return '#c8b56f'; // White for #3
+        return '#c8b56f';
       case 4:
       case 5:
       case 6:
-        return '#ba9cba'; // White for others
+        return '#ba9cba'; 
       default:
         return '#ba9cba';
     }

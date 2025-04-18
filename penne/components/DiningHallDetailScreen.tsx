@@ -327,14 +327,14 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
         {/* Floating Icons */}
         <View style={styles.floatingIcons}>
           <TouchableOpacity>
-            <Ionicons name="camera-outline" size={24} color="black" />
+            <Ionicons name="camera-outline" size={24} color="white" />
           </TouchableOpacity>
           <TouchableOpacity>
-            <Ionicons name="chatbubble-outline" size={24} color="black" />
+            <Ionicons name="chatbubble-outline" size={24} color="white" />
           </TouchableOpacity>
           {/* 🔥 Open Survey Popup when clicking the Plus Icon */}
           <TouchableOpacity onPress={() => setSurveyVisible(true)}>
-            <Ionicons name="add-circle-outline" size={24} color="black" />
+            <Ionicons name="add-circle-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -343,7 +343,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
       <View style={styles.contentContainer}>
         <Text style={styles.header}>{hallName}</Text>
 
-        {/* User Photos Section */}
+        {/* User Photos Section
         <Text style={styles.sectionTitle}>Photos from Penne members</Text>
         <FlatList
           horizontal
@@ -355,7 +355,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
             </View>
           )}
           showsHorizontalScrollIndicator={false}
-        />
+        /> */}
 
         {/* Menu Section */}
         <Text style={styles.sectionTitle}>Menu</Text>
@@ -372,28 +372,43 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
                   <Text style={styles.menuSubtext}>{dish.meal_type} • {dish.station}</Text>
                 </View>
                 <View style={styles.reactions}>
-                  <TouchableOpacity onPress={() => handleUpvote(dish.id)}>
-                    <View style={styles.reactionButton}>
-                      <Ionicons name="heart-outline" size={18} color={userVotes[dish.id]?.upvoted ? "#E28D61" : "black"} />
+                  <View style={styles.reactionContainer}>
+                    <TouchableOpacity 
+                      onPress={() => handleUpvote(dish.id)}
+                      style={styles.reactionButtonLeft}
+                    >
+                      <Ionicons 
+                        name={userVotes[dish.id]?.upvoted ? "heart" : "heart-outline"} 
+                        size={18} 
+                        color={userVotes[dish.id]?.upvoted ? "#E28D61" : '#8c9657'} 
+                      />
                       <Text style={[
                         styles.like, 
                         userVotes[dish.id]?.upvoted ? styles.activeVote : null
                       ]}>
                         {dish.dish_upvote}
                       </Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDownvote(dish.id)}>
-                    <View style={styles.reactionButton}>
-                      <Ionicons name="thumbs-down-outline" size={18} color={userVotes[dish.id]?.downvoted ? "#E28D61" : "black"} />
+                    </TouchableOpacity>
+                    
+                    <View style={styles.divider} />
+                    
+                    <TouchableOpacity 
+                      onPress={() => handleDownvote(dish.id)}
+                      style={styles.reactionButtonRight}
+                    >
+                      <Ionicons 
+                        name={userVotes[dish.id]?.downvoted ? "thumbs-down" : "thumbs-down-outline"} 
+                        size={18} 
+                        color={userVotes[dish.id]?.downvoted ? "#E28D61" : '#8c9657'} 
+                      />
                       <Text style={[
                         styles.dislike,
                         userVotes[dish.id]?.downvoted ? styles.activeVote : null
                       ]}>
                         {dish.dish_downvote}
                       </Text>
-                    </View>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             ))}
@@ -454,26 +469,46 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#fef8f0' },
 
   // Header Styles
-  headerContainer: { position: 'relative' },
-  headerImage: { width: '100%', height: 200 },
+  headerContainer: { 
+    position: 'relative',
+    marginBottom: 10, // Add margin to ensure space for corners to be visible
+  },
+  headerImage: { 
+    width: '100%', 
+    height: 250,
+  },
   floatingIcons: {
     position: 'absolute',
-    bottom: -20,
+    bottom: 10,
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 15,
-    backgroundColor: 'white',
+    backgroundColor: '#ba9cba',
     padding: 10,
     borderRadius: 20,
+    zIndex: 10,
+    elevation: 5,
   },
 
   // Content Styles
-  contentContainer: { padding: 16, marginTop: 20 },
+  contentContainer: { 
+    padding: 16, 
+    backgroundColor: '#fef8f0',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    marginTop: -40, // Pull up slightly to create overlap
+    paddingTop: 35, // Increase padding to accommodate icons
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3, // For Android
+  },
   header: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 8, textAlign: 'center' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 8, textAlign: 'left', marginLeft: 16 },
 
   // Photos Section
   photoWrapper: { marginRight: 10 },
@@ -504,23 +539,40 @@ const styles = StyleSheet.create({
   },
   reactions: { 
     flexDirection: 'row',
-    gap: 10, 
   },
-  reactionButton: {
+  reactionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ebdeb0',
     borderRadius: 16,
+    overflow: 'hidden',
+  },
+  reactionButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+  reactionButtonRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  divider: {
+    width: 1,
+    height: '70%',
+    backgroundColor: '#c8b56f',
   },
   like: { 
     marginLeft: 5,
     fontWeight: '500',
+    color: '#8c9657',
   },
   dislike: { 
     marginLeft: 5,
     fontWeight: '500',
+    color: '#8c9657',
   },
   activeVote: { 
     fontWeight: 'bold', 
