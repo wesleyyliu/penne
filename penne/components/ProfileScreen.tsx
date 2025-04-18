@@ -1,12 +1,14 @@
 import React from 'react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform, Image } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import Avatar from './Avatar'
 import { useFocusEffect, useRoute } from '@react-navigation/native'
+import Ionicons from 'react-native-vector-icons/Ionicons'
 
 import { RouteProp } from '@react-navigation/native';
+
 
 type ProfileScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>;
 
@@ -17,6 +19,12 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
   const [username, setUsername] = useState('')
   const [fullName, setFullName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [memberSince, setMemberSince] = useState('01/15/2025')
+  const [stats, setStats] = useState({
+    friends: 35,
+    likes: 50,
+    dislikes: 80
+  })
 
   useFocusEffect(
     React.useCallback(() => {
@@ -26,7 +34,7 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
 
   async function getProfile() {
     try {
-      setLoading(true)
+      setLoading(false)
       if (!session?.user) throw new Error('No user on the session!')
 
       const { data, error, status } = await supabase
@@ -45,76 +53,307 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
         setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
-      console.error('Error fetching profile:', error)
       if (error instanceof Error) {
-        Alert.alert(error.message)
+        console.error('Error:', error.message)
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.userInfoContainer}>
-        <Text style={styles.fullName}>{fullName}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>PROFILE</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('EditProfile', { session })}>
+            <Ionicons name="settings-outline" size={24} color="#787b46" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.mainContent}>
+          {/* PenneCard */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.headerContent}>
+                <Image 
+                  source={require('../assets/234.png')}
+                  style={styles.headerImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.cardTitle}>PenneCard</Text>
+              </View>
+            </View>
+
+            <View style={styles.cardBody}>
+              <View style={styles.userInfo}>
+                <View>
+                  <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
+                  <Text style={styles.userHandle}>@{username || 'username'}</Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberLabel}>Member since:</Text>
+                  <Text style={styles.memberDate}>{memberSince}</Text>
+                </View>
+              </View>
+              
+              <View style={styles.patternContainer}>
+                <View style={styles.patternRow}>
+                  {[...Array(5)].map((_, i) => (
+                    <Image
+                      key={`pattern-top-${i}`}
+                      source={require('../assets/123.png')}
+                      style={styles.patternImage}
+                      resizeMode="contain"
+                    />
+                  ))}
+                </View>
+                <View style={styles.patternRow}>
+                  {[...Array(5)].map((_, i) => (
+                    <Image
+                      key={`pattern-bottom-${i}`}
+                      source={require('../assets/123.png')}
+                      style={styles.patternImage}
+                      resizeMode="contain"
+                    />
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Stats */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Ionicons name="people-outline" size={24} color="#fb923c" />
+              <Text style={styles.statLabel}>Friends</Text>
+              <Text style={styles.statValue}>{stats.friends}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.statItem}>
+              <Ionicons name="heart-outline" size={24} color="#fb923c" />
+              <Text style={styles.statLabel}>Likes</Text>
+              <Text style={styles.statValue}>{stats.likes}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.statItem}>
+              <Ionicons name="thumbs-down-outline" size={24} color="#fb923c" />
+              <Text style={styles.statLabel}>Dislikes</Text>
+              <Text style={styles.statValue}>{stats.dislikes}</Text>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.addFriendsButton}>
+              <View style={styles.addIcon}>
+                <Ionicons name="add" size={16} color="#fff" />
+              </View>
+              <Text style={styles.addFriendsText}>Add Friends</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.shareButton}>
+              <Ionicons name="share-outline" size={24} color="#fb923c" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
-      <View style={styles.avatarContainer}>
-        <Avatar size={100} url={avatarUrl} onUpload={() => {}} upload={false} />
-      </View>
-      <View style={styles.userInfoContainer}>
-        <Text style={styles.username}>@{username}</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => navigation.navigate('EditProfile', { session })}>
-          <Text style={styles.buttonText}>Edit Profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Share Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fef8f0',
+  },
   container: {
-    marginTop: 20,
-    padding: 12,
-    alignItems: 'center', // Center align items
+    flex: 1,
+    padding: 16,
   },
-  avatarContainer: {
-    marginBottom: 20,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  userInfoContainer: {
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#787b46',
+  },
+  mainContent: {
+    flex: 1,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 24,
+    overflow: 'hidden',
+  },
+  cardHeader: {
+    backgroundColor: '#78716c',
+    padding: 16,
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerImage: {
+    width: 32,
+    height: 32,
+    tintColor: '#fff',
+  },
+  cardTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+  },
+  cardBody: {
+    padding: 24,
+    backgroundColor: '#F3E8FF',
+    position: 'relative',
+    minHeight: 120,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    zIndex: 1,
+  },
+  userName: {
+    fontSize: 32,
+    fontWeight: '500',
+    color: '#78716c',
+    marginBottom: 4,
+  },
+  userHandle: {
+    fontSize: 20,
+    color: '#78716c',
+  },
+  memberInfo: {
+    alignItems: 'flex-end',
+  },
+  memberLabel: {
+    fontSize: 16,
+    color: '#78716c',
+    marginBottom: 4,
+  },
+  memberDate: {
+    fontSize: 16,
+    color: '#78716c',
+    fontWeight: '500',
+  },
+  patternContainer: {
+    position: 'absolute',
+    right: 24,
+    top: '50%',
+    transform: [{ translateY: -80 }],
+    zIndex: 0,
+  },
+  patternRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    gap: 8,
+  },
+  patternImage: {
+    width: 32,
+    height: 32,
+    opacity: 0.15,
+    tintColor: '#78716c',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statItem: {
+    flex: 1,
     alignItems: 'center',
   },
-  fullName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  statLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+    marginBottom: 2,
   },
-  username: {
-    fontSize: 18,
-    color: 'gray',
+  statValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
   },
-  buttonContainer: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between',
-    marginTop: 20, 
+  divider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#e5e7eb',
+    marginHorizontal: 16,
   },
-  button: {
-    backgroundColor: '#b0b0b0',
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginHorizontal: 5,
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  addFriendsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fb923c',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginRight: 12,
   },
+  addIcon: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    padding: 4,
+    marginRight: 8,
+  },
+  addFriendsText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  shareButton: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  navItem: {
+    padding: 8,
+  },
+  activeNavItem: {
+    backgroundColor: '#fed7aa',
+    borderRadius: 8,
+  }
 })
