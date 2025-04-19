@@ -120,15 +120,15 @@ async function insertMenuData(menuData: MenuData, diningHallName: string): Promi
     
     // Batch insert for better performance
     if (dishesToInsert.length > 0) {
-      // Option 1: Just use insert instead of upsert if you don't need to update existing records
-      const { data, error } = await supabase
-        .from('menus')
-        .insert(dishesToInsert);
-      
-      // Option 2: Or first create a unique constraint in your database and then use upsert
+      // // Option 1: Just use insert instead of upsert if you don't need to update existing records
       // const { data, error } = await supabase
       //   .from('menus')
-      //   .upsert(dishesToInsert, { onConflict: 'dining_hall_name,meal_type,station,dish' });
+      //   .insert(dishesToInsert);
+      
+      // Option 2: Or first create a unique constraint in your database and then use upsert
+      const { data, error } = await supabase
+        .from('menus')
+        .upsert(dishesToInsert, { onConflict: 'dining_hall_name,meal_type,station,dish,created_at' });
         
       if (error) {
         console.error('Error inserting menu data:', error);

@@ -46,37 +46,21 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
     const fetchMenuData = async () => {
       try {
         setLoading(true);
-        
-        // Query the menus table for items matching the dining hall name
+
+        const today = new Date().toISOString().split('T')[0];
+
+        // Query with server-side sorting for better performance
         const { data, error } = await supabase
           .from('menus')
           .select('*')
-          .eq('dining_hall_name', hallName);
+          .eq('dining_hall_name', hallName)
+          .eq('created_at', today)
+          .order('meal_type', { ascending: true })
+          .order('station', { ascending: true })
+          .order('dish', { ascending: true });
         
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          // Sort the menu items: first by meal_type, then by station, then by dish name
-          const sortedData = [...data].sort((a, b) => {
-            // First, sort by meal_type
-            if (a.meal_type < b.meal_type) return -1;
-            if (a.meal_type > b.meal_type) return 1;
-            
-            // If meal_type is the same, sort by station
-            if (a.station < b.station) return -1;
-            if (a.station > b.station) return 1;
-            
-            // If station is also the same, sort by dish name
-            if (a.dish < b.dish) return -1;
-            if (a.dish > b.dish) return 1;
-            
-            return 0; // If all are equal
-          });
-          
-          setMenuItems(sortedData);
-        }
+        if (error) throw error;
+        setMenuItems(data || []);
       } catch (err) {
         console.error('Error fetching menu data:', err);
         setError('Failed to load menu items');
