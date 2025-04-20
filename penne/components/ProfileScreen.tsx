@@ -59,6 +59,25 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
     }
   }
 
+  async function updateProfile({ avatar_url }: { avatar_url?: string }) {
+    try {
+      if (!session?.user) throw new Error('No user on the session!')
+      
+      const updates = {
+        id: session.user.id,
+        updated_at: new Date().toISOString(),
+        ...(avatar_url && { avatar_url }),
+      }
+      
+      const { error } = await supabase.from('profiles').upsert(updates)
+      if (error) throw error
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error updating profile:', error.message)
+      }
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -86,17 +105,17 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
 
             <View style={styles.cardBody}>
               <View style={styles.profileImageContainer}>
-                {avatarUrl ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.profileImage}
+                <View style={styles.avatarWrapper}>
+                  <Avatar
+                    url={avatarUrl}
+                    size={90}
+                    onUpload={(path) => {
+                      setAvatarUrl(path)
+                      updateProfile({ avatar_url: path })
+                    }}
+                    upload={false}
                   />
-                ) : (
-                  <Image
-                    source={require('../assets/kei.png')}
-                    style={styles.profileImage}
-                  />
-                )}
+                </View>
               </View>
 
               <View style={styles.patternContainer}>
@@ -242,7 +261,7 @@ const styles = StyleSheet.create({
     top: 24,
     width: 90,
     height: 90,
-    borderRadius: 8,
+    borderRadius: 20,
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -396,5 +415,11 @@ const styles = StyleSheet.create({
   activeNavItem: {
     backgroundColor: '#fed7aa',
     borderRadius: 8,
-  }
+  },
+  avatarWrapper: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 20,
+  },
 })

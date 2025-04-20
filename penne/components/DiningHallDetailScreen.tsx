@@ -348,7 +348,7 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : menuItems.length > 0 ? (
-          <View>
+          <View style={styles.menuContainer}>
             {menuItems.map((dish, index) => (
               <View key={index} style={styles.menuItem}>
                 <View style={styles.menuItemDetails}>
@@ -499,6 +499,9 @@ const styles = StyleSheet.create({
   photo: { width: 80, height: 80, borderRadius: 10 },
 
   // Menu Section
+  menuContainer: {
+    paddingBottom: 50, // Add padding at the bottom of the menu
+  },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
