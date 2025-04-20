@@ -2,7 +2,7 @@ name: Update Dining Halls
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at midnight UTC daily
+    - cron: '0 9 * * *'  # Runs at 9am UTC daily
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
