@@ -1,0 +1,19 @@
+name: Update Dining Hall Menus
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at midnight UTC daily
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - run: npm ci
+      - run: npx ts-node scraper/add-dining-halls.ts
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
