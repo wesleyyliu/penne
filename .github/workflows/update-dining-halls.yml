@@ -1,4 +1,4 @@
-name: Update Dining Hall Menus
+name: Update Dining Halls
 
 on:
   schedule:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - run: npm ci
+      - run: npm install
       - run: npx ts-node scraper/add-dining-halls.ts
         env:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
