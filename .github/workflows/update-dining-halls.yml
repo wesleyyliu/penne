@@ -13,7 +13,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - run: npm install
-      - run: npx ts-node scraper/add-dining-halls.ts
+      - name: Install dependencies
+        run: |
+          cd penne  # Navigate to the penne directory where package.json is
+          npm install
+      - name: Run script
+        run: |
+          cd penne  # Navigate to the penne directory
+          npx ts-node scraper/add-dining-halls.ts
         env:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
