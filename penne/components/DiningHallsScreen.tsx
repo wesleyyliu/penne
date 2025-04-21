@@ -5,8 +5,14 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../screens/types';
 import { supabase } from '../lib/supabase';
 import CheckerboardBackground from './CheckerboardBackground';
+import { RouteProp } from '@react-navigation/native';
 
 type DiningHallsScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'DiningHallsScreen'
+>;
+
+type DiningHallsScreenRouteProp = RouteProp<
   RootStackParamList,
   'DiningHallsScreen'
 >;
@@ -18,12 +24,25 @@ interface DiningHallRating {
   letter: string;
 }
 
-const DiningHallsScreen = ({ route }) => {
+// Properly type the component props
+type DiningHallsScreenProps = {
+  route: DiningHallsScreenRouteProp;
+};
+
+const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
   const navigation = useNavigation<DiningHallsScreenNavigationProp>();
   const [diningHalls, setDiningHalls] = useState<DiningHallRating[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState('');
   const { session } = route.params || {};
+
+  // Navigation function with typed parameters
+  const navigateToDetail = useCallback((hallName: string) => {
+    navigation.navigate('DiningHallDetail', {
+      hallName,
+      session
+    });
+  }, [navigation, session]);
 
   // Function to get the day and date
   useEffect(() => {
@@ -180,10 +199,7 @@ const DiningHallsScreen = ({ route }) => {
                       styles.hall1Card,
                       { backgroundColor: getPositionColor(1) }
                     ]}
-                    onPress={() => navigation.navigate('DiningHallDetail', { 
-                      hallName: diningHalls[0].dining_hall_name,
-                      session 
-                    })}
+                    onPress={() => navigateToDetail(diningHalls[0].dining_hall_name)}
                   >
                     <View style={[
                       styles.hallInitial,
@@ -210,10 +226,7 @@ const DiningHallsScreen = ({ route }) => {
                       styles.hall2Card,
                       { backgroundColor: getPositionColor(2) }
                     ]}
-                    onPress={() => navigation.navigate('DiningHallDetail', { 
-                      hallName: diningHalls[1].dining_hall_name,
-                      session 
-                    })}
+                    onPress={() => navigateToDetail(diningHalls[1].dining_hall_name)}
                   >
                     <View style={[
                       styles.hallInitial,
@@ -243,10 +256,7 @@ const DiningHallsScreen = ({ route }) => {
                       styles.hall3Card,
                       { backgroundColor: getPositionColor(3) }
                     ]}
-                    onPress={() => navigation.navigate('DiningHallDetail', { 
-                      hallName: diningHalls[2].dining_hall_name,
-                      session 
-                    })}
+                    onPress={() => navigateToDetail(diningHalls[2].dining_hall_name)}
                   >
                     <View style={[
                       styles.hallInitial,
@@ -277,10 +287,7 @@ const DiningHallsScreen = ({ route }) => {
                   styles.fullWidthCard,
                   { backgroundColor: getPositionColor(index + 4) }
                 ]}
-                onPress={() => navigation.navigate('DiningHallDetail', { 
-                  hallName: hall.dining_hall_name,
-                  session 
-                })}
+                onPress={() => navigateToDetail(hall.dining_hall_name)}
               >
                 <View style={[
                   styles.hallInitial,
