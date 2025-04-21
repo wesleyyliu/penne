@@ -46,6 +46,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
   const [searching, setSearching] = useState(false)
   const [addingFriend, setAddingFriend] = useState<string | null>(null)
   const searchTimeout = useRef<NodeJS.Timeout | null>(null)
+  // Add new state to track friendships
+  const [friendships, setFriendships] = useState<Record<string, boolean>>({})
 
   useFocusEffect(
     React.useCallback(() => {
@@ -141,7 +143,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
       if (error) throw error
       
+      // Set results first so UI updates
       setSearchResults(data || [])
+      console.log("hi")
+      // Check if any of the results are already friends
+      if (data && data.length > 0 && session?.user) {
+        // Immediately clear friendships to avoid stale data
+        setFriendships({})
+        console.log(data)
+        // Then check friendships
+        await checkFriendships(data.map(user => user.id))
+      }
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error searching users:', error.message)
@@ -149,6 +161,66 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
       setSearchResults([])
     } finally {
       setSearching(false)
+    }
+  }
+
+  // New function to check if users are already friends
+  async function checkFriendships(userIds: string[]) {
+    if (!session?.user) return
+
+    console.log("userIds", userIds)
+    console.log("session.user.id", session.user.id)
+    
+    try {
+      // First check users that the current user follows
+      const { data: following, error: followingError } = await supabase
+        .from('follows')
+        .select('followed_user_id')
+        .eq('following_user_id', session.user.id)
+        .in('followed_user_id', userIds)
+      
+      if (followingError) throw followingError
+      console.log("userIds", userIds)
+      console.log("session.user.id", session.user.id)
+      // Then check users that follow the current user
+      const { data: followers, error: followersError } = await supabase
+        .from('follows')
+        .select('following_user_id')
+        .eq('followed_user_id', session.user.id)
+        .in('following_user_id', userIds)
+      
+      if (followersError) throw followersError
+      
+      // Create a map of user IDs to friendship status
+      const newFriendships: Record<string, boolean> = {}
+      
+      // Initialize all to false first
+      userIds.forEach(id => {
+        newFriendships[id] = false
+      })
+      
+      // Mark users as friends if current user follows them
+      if (following) {
+        following.forEach(friendship => {
+          newFriendships[friendship.followed_user_id] = true
+        })
+      }
+      
+      // Mark users as friends if they follow the current user
+      if (followers) {
+        followers.forEach(friendship => {
+          newFriendships[friendship.following_user_id] = true
+        })
+      }
+      console.log("following", following)
+      console.log("followers", followers)
+      console.log(newFriendships)
+      
+      setFriendships(newFriendships)
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error checking friendships:', error.message)
+      }
     }
   }
 
@@ -167,20 +239,51 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     }, 500)
   }
 
-  // Add a user as friend
+  // Add modal visibility handler to reset and check friendships
+  const handleOpenModal = async () => {
+    // Reset search state
+    setSearchQuery('')
+    setSearchResults([])
+    setFriendships({})
+    
+    // Open modal
+    setSearchModalVisible(true)
+  }
+
+  // Modify the add friend function to work correctly
   async function addFriend(friendId: string) {
     if (!session?.user) return
     
     setAddingFriend(friendId)
     try {
-      // Insert a record in a friends table
-      // Structure depends on your database schema
+      // Check if the friendship already exists to avoid duplicates
+      const { data: existing, error: checkError } = await supabase
+        .from('follows')
+        .select('*')
+        .eq('following_user_id', session.user.id)
+        .eq('followed_user_id', friendId)
+        .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        // If error isn't "no rows returned", it's a real error
+        throw checkError;
+      }
+      
+      // If friendship already exists, just update UI
+      if (existing) {
+        setFriendships(prev => ({
+          ...prev,
+          [friendId]: true
+        }));
+        return;
+      }
+      
+      // Otherwise insert new friendship
       const { error } = await supabase
-        .from('friends')
+        .from('follows')
         .insert({
-          user_id: session.user.id,
-          friend_id: friendId,
-          created_at: new Date().toISOString()
+          following_user_id: session.user.id,
+          followed_user_id: friendId,
         })
       
       if (error) throw error
@@ -191,10 +294,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
         friends: prev.friends + 1
       }))
       
-      // Close modal after successful add
-      setSearchModalVisible(false)
-      setSearchQuery('')
-      setSearchResults([])
+      // Update local friendships state
+      setFriendships(prev => ({
+        ...prev,
+        [friendId]: true
+      }))
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error adding friend:', error.message)
@@ -306,7 +410,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={styles.addFriendsButton}
-              onPress={() => setSearchModalVisible(true)}
+              onPress={handleOpenModal}
             >
               <View style={styles.addIcon}>
                 <Ionicons name="add" size={16} color="#fff" />
@@ -382,20 +486,26 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
                       <Text style={styles.resultName}>{item.full_name}</Text>
                       <Text style={styles.resultUsername}>@{item.username}</Text>
                     </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.addUserButton,
-                        addingFriend === item.id && styles.addingUserButton
-                      ]}
-                      onPress={() => addFriend(item.id)}
-                      disabled={addingFriend === item.id}
-                    >
-                      {addingFriend === item.id ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <Ionicons name="add" size={20} color="#fff" />
-                      )}
-                    </TouchableOpacity>
+                    {friendships[item.id] ? (
+                      <View style={styles.friendedButton}>
+                        <Ionicons name="checkmark" size={20} color="#fff" />
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={[
+                          styles.addUserButton,
+                          addingFriend === item.id && styles.addingUserButton
+                        ]}
+                        onPress={() => addFriend(item.id)}
+                        disabled={addingFriend === item.id}
+                      >
+                        {addingFriend === item.id ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Ionicons name="add" size={20} color="#fff" />
+                        )}
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )}
               />
@@ -648,7 +758,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#fef8f0',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -668,7 +778,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#fffc',
     borderRadius: 12,
     paddingHorizontal: 12,
     marginBottom: 16,
@@ -722,6 +832,11 @@ const styles = StyleSheet.create({
   },
   addingUserButton: {
     backgroundColor: '#fdba74',
+  },
+  friendedButton: {
+    backgroundColor: '#fb923c',
+    borderRadius: 8,
+    padding: 8,
   },
 })
 
