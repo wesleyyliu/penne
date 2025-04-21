@@ -68,7 +68,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     }
   }
 
-<<<<<<< HEAD
   async function downloadImage(path: string) {
     try {
       const { data, error } = await supabase.storage.from('avatars').download(path)
@@ -85,7 +84,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     } catch (error) {
       if (error instanceof Error) {
         console.log('Error downloading image: ', error.message)
-=======
+      }
+    }
+  }
+
   async function updateProfile({ avatar_url }: { avatar_url?: string }) {
     try {
       if (!session?.user) throw new Error('No user on the session!')
@@ -101,7 +103,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error updating profile:', error.message)
->>>>>>> a086f7ce4e529aac536cf5df1e522a3d54dcb22e
       }
     }
   }
@@ -435,7 +436,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fed7aa',
     borderRadius: 8,
   },
-<<<<<<< HEAD
   headerTitle: {
     fontSize: 42,
     fontWeight: '500',
@@ -462,12 +462,3 @@ const styles = StyleSheet.create({
 })
 
 export default ProfileScreen
-=======
-  avatarWrapper: {
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-    borderRadius: 20,
-  },
-})
->>>>>>> a086f7ce4e529aac536cf5df1e522a3d54dcb22e
