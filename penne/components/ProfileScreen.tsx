@@ -57,6 +57,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
   async function getProfile() {
     try {
+      setLoading(true)
       if (!session?.user) throw new Error('No user on the session!')
 
       const { data, error } = await supabase
@@ -73,13 +74,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
         setUsername(data.username)
         setFullName(data.full_name)
         if (data.avatar_url) {
-          downloadImage(data.avatar_url)
+          setAvatarUrl(data.avatar_url)  // Just set the path, Avatar will download it
         }
       }
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error:', error.message)
       }
+    } finally {
+      setLoading(false)
     }
   }
 
