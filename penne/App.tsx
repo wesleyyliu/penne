@@ -98,6 +98,7 @@ export default function App() {
           name="Profile" 
           component={ProfileStack}
           initialParams={{ session }}
+          options={{ title: "" }}
         /> 
       </Tab.Navigator>
     </NavigationContainer>

@@ -3,6 +3,12 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-nat
 import { supabase } from '../lib/supabase';
 import { useRoute } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Session } from '@supabase/supabase-js';
+
+// Define route params type
+type RouteParams = {
+  session?: Session;
+};
 
 // Interface for the dining hall ratings
 interface DiningHallRating {
@@ -12,8 +18,12 @@ interface DiningHallRating {
 }
 
 const LeaderboardScreen = () => {
-  const route = useRoute();
-  const { session } = route.params;
+  const route = useRoute<{
+    key: string;
+    name: string;
+    params: RouteParams;
+  }>();
+  const { session } = route.params || {};
   const [diningHallRatings, setDiningHallRatings] = useState<DiningHallRating[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -253,7 +263,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 20,
+    marginTop: 80,
+    marginBottom: 40,
     color: '#7E8B5F', // Green color from the image
   },
   topThreeContainer: {
@@ -261,6 +272,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     height: 280, // Increased height to accommodate taller podium
     marginBottom: 20,
+    marginTop: 20,
   },
   topCard: {
     width: '30%',

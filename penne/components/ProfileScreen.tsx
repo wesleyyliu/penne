@@ -4,17 +4,24 @@ import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform, Image } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import Avatar from './Avatar'
-import { useFocusEffect, useRoute } from '@react-navigation/native'
+import { useFocusEffect } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { RouteProp } from '@react-navigation/native'
+import { ProfileStackParamList } from '../screens/types'
+import { StackNavigationProp } from '@react-navigation/stack'
 
-import { RouteProp } from '@react-navigation/native';
+// Define the props types using the ProfileStackParamList
+type ProfileScreenRouteProp = RouteProp<ProfileStackParamList, 'ViewProfile'>
+type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList>
 
+type ProfileScreenProps = {
+  route: ProfileScreenRouteProp;
+  navigation: ProfileScreenNavigationProp;
+}
 
-type ProfileScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>;
-
-export default function ProfileScreen({ navigation }: { navigation: any; route: ProfileScreenRouteProp }) {
-  const route = useRoute<ProfileScreenRouteProp>()
-  const { session } = route.params
+// Make the component a proper functional component with Props
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
+  const { session } = route.params || {}
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
   const [fullName, setFullName] = useState('')
@@ -50,7 +57,9 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
       if (data) {
         setUsername(data.username)
         setFullName(data.full_name)
-        setAvatarUrl(data.avatar_url)
+        if (data.avatar_url) {
+          downloadImage(data.avatar_url)
+        }
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -59,6 +68,24 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
     }
   }
 
+<<<<<<< HEAD
+  async function downloadImage(path: string) {
+    try {
+      const { data, error } = await supabase.storage.from('avatars').download(path)
+
+      if (error) {
+        throw error
+      }
+
+      const fr = new FileReader()
+      fr.readAsDataURL(data)
+      fr.onload = () => {
+        setAvatarUrl(fr.result as string)
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log('Error downloading image: ', error.message)
+=======
   async function updateProfile({ avatar_url }: { avatar_url?: string }) {
     try {
       if (!session?.user) throw new Error('No user on the session!')
@@ -74,6 +101,7 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error updating profile:', error.message)
+>>>>>>> a086f7ce4e529aac536cf5df1e522a3d54dcb22e
       }
     }
   }
@@ -82,9 +110,12 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={styles.headerContainer}>
           <Text style={styles.headerTitle}>PROFILE</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('EditProfile', { session })}>
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate('Settings', { session })}
+          >
             <Ionicons name="settings-outline" size={24} color="#787b46" />
           </TouchableOpacity>
         </View>
@@ -95,7 +126,7 @@ export default function ProfileScreen({ navigation }: { navigation: any; route: 
             <View style={styles.cardHeader}>
               <View style={styles.headerContent}>
                 <Image 
-                  source={require('../assets/kei.png')}
+                  source={require('../assets/234.png')}
                   style={styles.headerImage}
                   resizeMode="contain"
                 />
@@ -202,17 +233,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#787b46',
-  },
   mainContent: {
     flex: 1,
   },
@@ -289,13 +309,13 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   userName: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '500',
     color: '#78716c',
     marginBottom: 4,
   },
   userHandle: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#78716c',
   },
   memberInfo: {
@@ -313,9 +333,8 @@ const styles = StyleSheet.create({
   },
   patternContainer: {
     position: 'absolute',
-    right: 24,
-    top: '50%',
-    transform: [{ translateY: -80 }],
+    left: 130,
+    top: 24,
     zIndex: 0,
   },
   patternRow: {
@@ -416,6 +435,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#fed7aa',
     borderRadius: 8,
   },
+<<<<<<< HEAD
+  headerTitle: {
+    fontSize: 42,
+    fontWeight: '500',
+    letterSpacing: 2,
+    color: '#787b46',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    textTransform: 'uppercase',
+  },
+  headerContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    position: 'relative',
+  },
+  settingsButton: {
+    position: 'absolute',
+    right: 16,
+    top: 15,
+  },
+})
+
+export default ProfileScreen
+=======
   avatarWrapper: {
     width: '100%',
     height: '100%',
@@ -423,3 +470,4 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
 })
+>>>>>>> a086f7ce4e529aac536cf5df1e522a3d54dcb22e

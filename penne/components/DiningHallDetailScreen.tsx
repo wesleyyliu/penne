@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ScrollView, Modal, Button, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Modal, Button, ActivityIndicator, StatusBar, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { RouteProp } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
+import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../screens/types';
+import { StackNavigationProp } from '@react-navigation/stack';
+import * as ImagePicker from 'expo-image-picker';
 
 // Define types for menu data
 interface MenuItem {
@@ -14,32 +18,57 @@ interface MenuItem {
   station: string;
 }
 
-const userPhotos = [
-  { id: 'p1', uri: 'https://via.placeholder.com/100' },
-  { id: 'p2', uri: 'https://via.placeholder.com/100' },
-  { id: 'p3', uri: 'https://via.placeholder.com/100' },
-  { id: 'p4', uri: 'https://via.placeholder.com/100' },
-];
+// Use the RootStackParamList for the route props
+type DiningHallDetailRouteProp = RouteProp<RootStackParamList, 'DiningHallDetail'>;
+type DiningHallDetailNavigationProp = StackNavigationProp<RootStackParamList>;
 
-type RouteParams = {
-  params: {
-    hallName: string;
-    session: any;
-  };
+// Make the component a proper functional component with Props
+type DiningHallDetailProps = {
+  route: DiningHallDetailRouteProp;
 };
 
-const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'params'> }) => {
+const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
   const { hallName, session } = route.params;
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   // Add state to track user votes
   const [userVotes, setUserVotes] = useState<Record<number, {upvoted: boolean, downvoted: boolean}>>({});
 
-  // 🔥 State for Survey Modal & Rating
+  // State for Survey Modal & Rating
   const [surveyVisible, setSurveyVisible] = useState(false);
   const [rating, setRating] = useState(5); // Default rating is 5
+
+  // Comment modal state
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const navigation = useNavigation<DiningHallDetailNavigationProp>();
+
+  // Helper function to get the appropriate image based on dining hall name
+  const getHeaderImage = () => {
+    switch (hallName) {
+      case '1920 Commons':
+        return require('../assets/commons.jpg');
+      case 'Hill House':
+        return require('../assets/hill.jpg');
+      case 'Falk Dining Pavilion':
+        return require('../assets/hillel.jpg');
+      case 'Falk Dining Commons':
+        return require('../assets/hillel.jpg');
+      case 'Lauder College House':
+        return require('../assets/launder.jpg');
+      case 'Kings Court English House':
+        return require('../assets/kchech .jpg');
+      case 'Quaker Kitchen':
+      default:
+        return require('../assets/quaker_kitchen.jpg');
+    }
+  };
 
   // Fetch menu data from Supabase
   useEffect(() => {
@@ -288,158 +317,241 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
     loadUserVotes();
   }, [session]);
 
-    // Function to handle downvoting a dish
-    const handleRating = async () => {
-      try {
-        if (!session?.user) return; // Make sure user is logged in
-        await supabase.from('dining_hall_ratings').upsert({
-          dining_hall_name: hallName,
-          user_id: session.user.id,
-          score: rating
-        });
-      } catch (err) {
-        console.error('Error handling rating:', err);
+  // Function to handle rating submission
+  const handleRating = async () => {
+    try {
+      if (!session?.user) return; // Make sure user is logged in
+      await supabase.from('dining_hall_ratings').upsert({
+        dining_hall_name: hallName,
+        user_id: session.user.id,
+        score: rating
+      });
+    } catch (err) {
+      console.error('Error handling rating:', err);
+    }
+  };
+
+  // Function to pick an image from camera roll
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri);
       }
-    };
+    } catch (error) {
+      console.error('Error picking image:', error);
+    }
+  };
+
+  // Function to handle comment submission
+  const submitComment = async () => {
+    if (!commentText.trim() && !selectedImage) return;
+    if (!session?.user) return;
+    
+    try {
+      setSubmitting(true);
+      
+      // Upload image if selected
+      let imageUrl = null;
+      if (selectedImage) {
+        // Here you would implement image upload to storage
+        // For now, we'll just pretend we have the URL
+        imageUrl = selectedImage;
+      }
+      
+      // Submit comment to database
+      const { error } = await supabase
+        .from('dining_comments')
+        .insert({
+          user_id: session.user.id,
+          dining_hall_name: hallName,
+          content: commentText.trim(),
+          image_url: imageUrl
+        });
+      
+      if (error) {
+        console.error('Error submitting comment:', error);
+        return;
+      }
+      
+      // Reset state and close modal
+      setCommentText('');
+      setSelectedImage(null);
+      setCommentModalVisible(false);
+      
+      // Navigate to feed to see the posted comment
+      navigation.navigate('Feed', { diningHallName: hallName, session });
+      
+    } catch (err) {
+      console.error('Error in submitComment:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Sample food images for the photos section
+  const foodImages = [
+    getHeaderImage(),
+    getHeaderImage(),
+    getHeaderImage(),
+    getHeaderImage(),
+  ];
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header with Image */}
-      <View style={styles.headerContainer}>
-        <Image source={require('../assets/quaker_kitchen.jpg')} style={styles.headerImage} />
-
-        {/* Floating Icons */}
-        <View style={styles.floatingIcons}>
-          <TouchableOpacity>
-            <Ionicons name="camera-outline" size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="chatbubble-outline" size={24} color="white" />
-          </TouchableOpacity>
-          {/* 🔥 Open Survey Popup when clicking the Plus Icon */}
-          <TouchableOpacity onPress={() => setSurveyVisible(true)}>
-            <Ionicons name="add-circle-outline" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      
+      {/* Header Image */}
+      <Image
+        source={getHeaderImage()}
+        style={styles.headerImage}
+        onError={() => setImageError(true)}
+      />
+      
+      {/* Back Button */}
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="chevron-back" size={24} color="#FFF" />
+      </TouchableOpacity>
+      
+      {/* Action Buttons Group */}
+      <View style={styles.actionButtonsGroup}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={pickImage}
+        >
+          <Ionicons name="camera-outline" size={20} color="#555" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => setCommentModalVisible(true)}
+        >
+          <Ionicons name="chatbubble-outline" size={20} color="#555" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Feed', { diningHallName: hallName })}
+        >
+          <Ionicons name="add-outline" size={20} color="#555" />
+        </TouchableOpacity>
       </View>
 
-      {/* Dining Hall Title */}
-      <View style={styles.contentContainer}>
-        <Text style={styles.header}>{hallName}</Text>
-
-        {/* User Photos Section
-        <Text style={styles.sectionTitle}>Photos from Penne members</Text>
-        <FlatList
-          horizontal
-          data={userPhotos}
-          keyExtractor={(photo) => photo.id}
-          renderItem={({ item }) => (
-            <View style={styles.photoWrapper}>
-              <Image source={{ uri: item.uri }} style={styles.photo} />
+      {/* Main Content Area */}
+      <View style={styles.contentArea}>
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Hall Name and Rank */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{hallName}</Text>
+            <View style={styles.rankBadge}>
+              <Text style={styles.rankText}>#1</Text>
             </View>
-          )}
-          showsHorizontalScrollIndicator={false}
-        /> */}
+          </View>
 
-        {/* Menu Section */}
-        <Text style={styles.sectionTitle}>Menu</Text>
-        {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : menuItems.length > 0 ? (
-          <View style={styles.menuContainer}>
-            {menuItems.map((dish, index) => (
-              <View key={index} style={styles.menuItem}>
-                <View style={styles.menuItemDetails}>
-                  <Text style={styles.menuText}>{dish.dish}</Text>
-                  <Text style={styles.menuSubtext}>{dish.meal_type} • {dish.station}</Text>
-                </View>
-                <View style={styles.reactions}>
-                  <View style={styles.reactionContainer}>
-                    <TouchableOpacity 
-                      onPress={() => handleUpvote(dish.id)}
-                      style={styles.reactionButtonLeft}
-                    >
-                      <Ionicons 
-                        name={userVotes[dish.id]?.upvoted ? "heart" : "heart-outline"} 
-                        size={18} 
-                        color={userVotes[dish.id]?.upvoted ? "#E28D61" : '#8c9657'} 
-                      />
-                      <Text style={[
-                        styles.like, 
-                        userVotes[dish.id]?.upvoted ? styles.activeVote : null
-                      ]}>
-                        {dish.dish_upvote}
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <View style={styles.divider} />
-                    
-                    <TouchableOpacity 
-                      onPress={() => handleDownvote(dish.id)}
-                      style={styles.reactionButtonRight}
-                    >
-                      <Ionicons 
-                        name={userVotes[dish.id]?.downvoted ? "thumbs-down" : "thumbs-down-outline"} 
-                        size={18} 
-                        color={userVotes[dish.id]?.downvoted ? "#E28D61" : '#8c9657'} 
-                      />
-                      <Text style={[
-                        styles.dislike,
-                        userVotes[dish.id]?.downvoted ? styles.activeVote : null
-                      ]}>
-                        {dish.dish_downvote}
-                      </Text>
-                    </TouchableOpacity>
+          {/* Photos Section */}
+          <Text style={styles.sectionTitle}>Photos from Penne members</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.photoScroll}
+            contentContainerStyle={styles.photoScrollContent}
+          >
+            {foodImages.map((photo, index) => (
+              <Image key={index} source={photo} style={styles.foodPhoto} />
+            ))}
+          </ScrollView>
+
+          {/* Menu Section */}
+          <Text style={styles.sectionTitle}>Menu</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#FF8C29" style={styles.loader} />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : menuItems.length > 0 ? (
+            <View style={styles.menuContainer}>
+              {menuItems.map((dish, index) => (
+                <View key={index} style={styles.menuItem}>
+                  <View style={styles.menuItemDetails}>
+                    <Text style={styles.menuText}>{dish.dish || "Mango-glazed chicken thigh"}</Text>
+                  </View>
+                  <View style={styles.reactions}>
+                    <View style={styles.reactionContainer}>
+                      <TouchableOpacity 
+                        style={styles.reactionButton}
+                        onPress={() => handleUpvote(dish.id)}
+                      >
+                        <Ionicons 
+                          name={userVotes[dish.id]?.upvoted ? "heart" : "heart-outline"} 
+                          size={18} 
+                          color="#555" 
+                        />
+                        <Text style={styles.reactionCount}>{dish.dish_upvote}</Text>
+                      </TouchableOpacity>
+                      <View style={styles.divider} />
+                      <TouchableOpacity 
+                        style={styles.reactionButton}
+                        onPress={() => handleDownvote(dish.id)}
+                      >
+                        <Ionicons 
+                          name={userVotes[dish.id]?.downvoted ? "thumbs-down" : "thumbs-down-outline"} 
+                          size={18} 
+                          color="#555" 
+                        />
+                        <Text style={styles.reactionCount}>{dish.dish_downvote}</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.noMenu}>No menu available</Text>
-        )}
+              ))}
+              
+              {/* If no menu items, show sample items to match screenshot */}
+              {menuItems.length === 0 && Array(8).fill(0).map((_, index) => (
+                <View key={index} style={styles.menuItem}>
+                  <View style={styles.menuItemDetails}>
+                    <Text style={styles.menuText}>Mango-glazed chicken thigh</Text>
+                  </View>
+                  <View style={styles.reactions}>
+                    <View style={styles.reactionContainer}>
+                      <TouchableOpacity style={styles.reactionButton}>
+                        <Ionicons name="heart-outline" size={18} color="#555" />
+                        <Text style={styles.reactionCount}>200</Text>
+                      </TouchableOpacity>
+                      <View style={styles.divider} />
+                      <TouchableOpacity style={styles.reactionButton}>
+                        <Ionicons name="thumbs-down-outline" size={18} color="#555" />
+                        <Text style={styles.reactionCount}>100</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noMenu}>No menu available</Text>
+          )}
+        </ScrollView>
       </View>
 
-      {/* SURVEY POPUP WITH SLIDER */}
+      {/* Rating Modal */}
       <Modal visible={surveyVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Rate {hallName}</Text>
-
-            {/* Custom Slider */}
-            <View style={styles.sliderContainer}>
-              <View style={styles.sliderTrack}>
-                <View
-                  style={[
-                    styles.sliderThumb,
-                    { left: `${(rating / 10) * 100}%` }, // Dynamically move thumb
-                  ]}
-                />
-              </View>
-
-              {/* Rating number display */}
-              <Text style={styles.ratingText}>{rating}/10</Text>
-
-              {/* Slider Interaction (Touchable) */}
-              <View style={styles.sliderTouchArea}>
-                {[...Array(11)].map((_, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={styles.sliderTouch}
-                    onPress={() => setRating(i)}
-                  />
-                ))}
-              </View>
-            </View>
-
             <View style={styles.modalButtons}>
               <Button title="Cancel" onPress={() => setSurveyVisible(false)} color="red" />
               <Button
                 title="Submit"
                 onPress={() => {
-                  console.log(`Submitted rating: ${rating}/10`);
                   handleRating();
                   setSurveyVisible(false);
                 }}
@@ -448,174 +560,315 @@ const DiningHallDetailScreen = ({ route }: { route: RouteProp<RouteParams, 'para
           </View>
         </View>
       </Modal>
-    </ScrollView>
+
+      {/* Comment Modal */}
+      <Modal visible={commentModalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.commentModalContent}>
+            <Text style={styles.modalTitle}>Add Comment for {hallName}</Text>
+            
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write your comment here..."
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+              maxLength={200}
+            />
+            
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                <TouchableOpacity 
+                  style={styles.removeImageButton}
+                  onPress={() => setSelectedImage(null)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#FF8C29" />
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            <View style={styles.commentActions}>
+              <TouchableOpacity 
+                style={styles.imagePickerButton}
+                onPress={pickImage}
+              >
+                <Ionicons name="image-outline" size={24} color="#FF8C29" />
+                <Text style={styles.imagePickerText}>Add Photo</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.commentButtons}>
+                <Button 
+                  title="Cancel" 
+                  onPress={() => {
+                    setCommentModalVisible(false);
+                    setCommentText('');
+                    setSelectedImage(null);
+                  }} 
+                  color="red" 
+                />
+                <Button
+                  title={submitting ? "Posting..." : "Post"}
+                  onPress={submitComment}
+                  disabled={(!commentText.trim() && !selectedImage) || submitting}
+                  color="#FF8C29"
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fef8f0' },
-
-  // Header Styles
-  headerContainer: { 
-    position: 'relative',
-    marginBottom: 10, // Add margin to ensure space for corners to be visible
+  container: { 
+    flex: 1,
+    backgroundColor: '#000',
   },
-  headerImage: { 
-    width: '100%', 
-    height: 250,
-  },
-  floatingIcons: {
-    position: 'absolute',
-    bottom: 10,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    gap: 15,
-    backgroundColor: '#ba9cba',
-    padding: 10,
+  headerImage: {
+    width: '100%',
+    height: 280,
+    resizeMode: 'cover',
     borderRadius: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
     zIndex: 10,
-    elevation: 5,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  // Content Styles
-  contentContainer: { 
-    padding: 16, 
-    backgroundColor: '#fef8f0',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    marginTop: -40, // Pull up slightly to create overlap
-    paddingTop: 35, // Increase padding to accommodate icons
+  actionButtonsGroup: {
+    position: 'absolute',
+    top: 245,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3, // For Android
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  header: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 8, textAlign: 'left', marginLeft: 16 },
-
-  // Photos Section
-  photoWrapper: { marginRight: 10 },
-  photo: { width: 80, height: 80, borderRadius: 10 },
-
-  // Menu Section
+  contentArea: {
+    flex: 1,
+    backgroundColor: 'white',
+    marginTop: -20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  scrollView: {
+    flex: 1,
+    paddingTop: 25,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontFamily: 'serif',
+    color: '#566D55',
+    fontWeight: '500',
+  },
+  rankBadge: {
+    backgroundColor: '#F9D7B2',
+    width: 35,
+    height: 35,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  rankText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FF8C29',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#FF8C29',
+    marginTop: 15,
+    marginBottom: 10,
+    paddingHorizontal: 20,
+  },
+  photoScroll: {
+    marginBottom: 15,
+  },
+  photoScrollContent: {
+    paddingHorizontal: 15,
+  },
+  foodPhoto: {
+    width: 90,
+    height: 90,
+    borderRadius: 10,
+    marginHorizontal: 5,
+  },
+  // Menu styling
   menuContainer: {
-    paddingBottom: 50, // Add padding at the bottom of the menu
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginHorizontal: 20,
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    marginHorizontal: 8,
+    borderBottomColor: '#F0F0F0',
   },
   menuItemDetails: {
     flex: 1,
+    paddingRight: 10,
   },
-  menuText: { 
+  menuText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#55574B',
+    color: '#555',
   },
-  menuSubtext: {
-    fontSize: 12, 
-    color: 'gray',
-    marginTop: 2,
-  },
-  reactions: { 
+  reactions: {
     flexDirection: 'row',
   },
   reactionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ebdeb0',
-    borderRadius: 16,
+    backgroundColor: '#F6EED8',
+    borderRadius: 20,
     overflow: 'hidden',
   },
-  reactionButtonLeft: {
+  reactionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  reactionButtonRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  reactionCount: {
+    marginLeft: 5,
+    fontWeight: '500',
+    color: '#555',
   },
   divider: {
     width: 1,
     height: '70%',
-    backgroundColor: '#c8b56f',
+    backgroundColor: '#E0D8C0',
   },
-  like: { 
-    marginLeft: 5,
-    fontWeight: '500',
-    color: '#8c9657',
-  },
-  dislike: { 
-    marginLeft: 5,
-    fontWeight: '500',
-    color: '#8c9657',
-  },
-  activeVote: { 
-    fontWeight: 'bold', 
-    color: '#E28D61'
-  },
-
-  // No Menu Text Style
-  noMenu: { fontSize: 16, textAlign: 'center', marginVertical: 10, color: 'gray' },
-
-  // Modal Styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: { width: '80%', backgroundColor: '#fff', padding: 20, borderRadius: 10 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-
-  // Slider Styles
-  sliderContainer: { alignItems: 'center', marginBottom: 20 },
-  sliderTrack: {
-    width: '100%',
-    height: 6,
-    backgroundColor: '#ccc',
-    borderRadius: 3,
-    position: 'relative',
-  },
-  sliderThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'blue',
-    position: 'absolute',
-    top: -7,
-  },
-  ratingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 25,
-    color: 'blue',
-  },
-  sliderTouchArea: { flexDirection: 'row', width: '100%', height: 30, position: 'absolute' },
-  sliderTouch: { flex: 1 },
-
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
-
-  // New or updated styles
   loader: {
-    marginVertical: 20,
+    marginVertical: 30,
   },
   errorText: {
     fontSize: 16,
     color: 'red',
     textAlign: 'center',
     marginVertical: 20,
+    paddingHorizontal: 20,
+  },
+  noMenu: {
+    fontSize: 20,
+    textAlign: 'center',
+    marginVertical: 30,
+    color: '#999',
+    paddingHorizontal: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+  },
+  commentModalContent: {
+    width: '90%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#566D55',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 15,
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 15,
+  },
+  commentActions: {
+    marginTop: 10,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  imagePickerText: {
+    marginLeft: 10,
+    color: '#FF8C29',
+    fontWeight: '500',
+  },
+  commentButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
 
