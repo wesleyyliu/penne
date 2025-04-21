@@ -81,7 +81,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
         // Query with server-side sorting for better performance
         const { data, error } = await supabase
           .from('menus')
-          .select('*')
+          .select('id, dish, dish_upvote, dish_downvote, meal_type, station')
           .eq('dining_hall_name', hallName)
           .eq('created_at', today)
           .order('meal_type', { ascending: true })

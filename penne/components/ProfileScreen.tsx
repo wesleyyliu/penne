@@ -1,7 +1,7 @@
 import React from 'react'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform, Image } from 'react-native'
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform, Image, TextInput, Modal, FlatList, ActivityIndicator } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import Avatar from './Avatar'
 import { useFocusEffect } from '@react-navigation/native'
@@ -19,6 +19,13 @@ type ProfileScreenProps = {
   navigation: ProfileScreenNavigationProp;
 }
 
+type UserProfile = {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url?: string;
+}
+
 // Make the component a proper functional component with Props
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
   const { session } = route.params || {}
@@ -32,6 +39,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     likes: 50,
     dislikes: 80
   })
+  // New state for friend search functionality
+  const [searchModalVisible, setSearchModalVisible] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([])
+  const [searching, setSearching] = useState(false)
+  const [addingFriend, setAddingFriend] = useState<string | null>(null)
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
 
   useFocusEffect(
     React.useCallback(() => {
@@ -106,6 +120,89 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     }
   }
 
+  // Search for users based on username or full name
+  async function searchUsers(query: string) {
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    setSearching(true)
+    try {
+      // Search for users that match the query in username or full_name
+      // Exclude the current user from results
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+        .neq('id', session?.user?.id || '')
+        .limit(10)
+
+      if (error) throw error
+      
+      setSearchResults(data || [])
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error searching users:', error.message)
+      }
+      setSearchResults([])
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  // Handle search input with debounce
+  const handleSearchInput = (text: string) => {
+    setSearchQuery(text)
+    
+    // Clear any existing timeout
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current)
+    }
+    
+    // Set a new timeout to search after 500ms
+    searchTimeout.current = setTimeout(() => {
+      searchUsers(text)
+    }, 500)
+  }
+
+  // Add a user as friend
+  async function addFriend(friendId: string) {
+    if (!session?.user) return
+    
+    setAddingFriend(friendId)
+    try {
+      // Insert a record in a friends table
+      // Structure depends on your database schema
+      const { error } = await supabase
+        .from('friends')
+        .insert({
+          user_id: session.user.id,
+          friend_id: friendId,
+          created_at: new Date().toISOString()
+        })
+      
+      if (error) throw error
+      
+      // Update local friend count
+      setStats(prev => ({
+        ...prev,
+        friends: prev.friends + 1
+      }))
+      
+      // Close modal after successful add
+      setSearchModalVisible(false)
+      setSearchQuery('')
+      setSearchResults([])
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error adding friend:', error.message)
+      }
+    } finally {
+      setAddingFriend(null)
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -136,17 +233,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
             <View style={styles.cardBody}>
               <View style={styles.profileImageContainer}>
-                <View style={styles.avatarWrapper}>
-                  <Avatar
-                    url={avatarUrl}
-                    size={90}
-                    onUpload={(path) => {
-                      setAvatarUrl(path)
-                      updateProfile({ avatar_url: path })
-                    }}
-                    upload={false}
-                  />
-                </View>
+                <Avatar
+                  url={avatarUrl}
+                  size={90}
+                  onUpload={(path) => {
+                    setAvatarUrl(path)
+                    updateProfile({ avatar_url: path })
+                  }}
+                  upload={false}
+                />
               </View>
 
               <View style={styles.patternContainer}>
@@ -208,7 +303,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.addFriendsButton}>
+            <TouchableOpacity 
+              style={styles.addFriendsButton}
+              onPress={() => setSearchModalVisible(true)}
+            >
               <View style={styles.addIcon}>
                 <Ionicons name="add" size={16} color="#fff" />
               </View>
@@ -220,6 +318,90 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
           </View>
         </View>
       </View>
+
+      {/* Friend Search Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={searchModalVisible}
+        onRequestClose={() => setSearchModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Friends</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchModalVisible(false)
+                  setSearchQuery('')
+                  setSearchResults([])
+                }}
+              >
+                <Ionicons name="close" size={24} color="#78716c" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color="#78716c" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by username or name"
+                value={searchQuery}
+                onChangeText={handleSearchInput}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchQuery('')
+                    setSearchResults([])
+                  }}
+                  style={styles.clearSearch}
+                >
+                  <Ionicons name="close-circle" size={16} color="#78716c" />
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {searching ? (
+              <ActivityIndicator color="#fb923c" style={styles.loadingIndicator} />
+            ) : (
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={
+                  searchQuery.length > 0 ? (
+                    <Text style={styles.emptyListText}>No users found</Text>
+                  ) : null
+                }
+                renderItem={({ item }) => (
+                  <View style={styles.userResultItem}>
+                    <View style={styles.userResultInfo}>
+                      <Text style={styles.resultName}>{item.full_name}</Text>
+                      <Text style={styles.resultUsername}>@{item.username}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.addUserButton,
+                        addingFriend === item.id && styles.addingUserButton
+                      ]}
+                      onPress={() => addFriend(item.id)}
+                      disabled={addingFriend === item.id}
+                    >
+                      {addingFriend === item.id ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Ionicons name="add" size={20} color="#fff" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -463,6 +645,88 @@ const styles = StyleSheet.create({
     height: '100%',
     overflow: 'hidden',
     borderRadius: 20,
+  },
+  // Friend search modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    height: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#78716c',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  clearSearch: {
+    padding: 4,
+  },
+  loadingIndicator: {
+    marginTop: 20,
+  },
+  emptyListText: {
+    textAlign: 'center',
+    color: '#6b7280',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  userResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  userResultInfo: {
+    flex: 1,
+  },
+  resultName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  resultUsername: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  addUserButton: {
+    backgroundColor: '#fb923c',
+    borderRadius: 8,
+    padding: 8,
+  },
+  addingUserButton: {
+    backgroundColor: '#fdba74',
   },
 })
 
