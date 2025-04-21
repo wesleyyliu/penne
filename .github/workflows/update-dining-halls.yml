@@ -1,0 +1,25 @@
+name: Update Dining Halls
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Runs at 9am UTC daily
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: |
+          cd penne  # Navigate to the penne directory where package.json is
+          npm install
+      - name: Run script
+        run: |
+          cd penne  # Navigate to the penne directory
+          npx ts-node scraper/add-dining-halls.ts
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

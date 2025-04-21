@@ -68,6 +68,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     }
   }
 
+<<<<<<< HEAD
   async function downloadImage(path: string) {
     try {
       const { data, error } = await supabase.storage.from('avatars').download(path)
@@ -84,6 +85,23 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
     } catch (error) {
       if (error instanceof Error) {
         console.log('Error downloading image: ', error.message)
+=======
+  async function updateProfile({ avatar_url }: { avatar_url?: string }) {
+    try {
+      if (!session?.user) throw new Error('No user on the session!')
+      
+      const updates = {
+        id: session.user.id,
+        updated_at: new Date().toISOString(),
+        ...(avatar_url && { avatar_url }),
+      }
+      
+      const { error } = await supabase.from('profiles').upsert(updates)
+      if (error) throw error
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error updating profile:', error.message)
+>>>>>>> a086f7ce4e529aac536cf5df1e522a3d54dcb22e
       }
     }
   }
@@ -118,17 +136,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
             <View style={styles.cardBody}>
               <View style={styles.profileImageContainer}>
-                {avatarUrl ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.profileImage}
+                <View style={styles.avatarWrapper}>
+                  <Avatar
+                    url={avatarUrl}
+                    size={90}
+                    onUpload={(path) => {
+                      setAvatarUrl(path)
+                      updateProfile({ avatar_url: path })
+                    }}
+                    upload={false}
                   />
-                ) : (
-                  <Image
-                    source={require('../assets/kei.png')}
-                    style={styles.profileImage}
-                  />
-                )}
+                </View>
               </View>
 
               <View style={styles.patternContainer}>
@@ -263,7 +281,7 @@ const styles = StyleSheet.create({
     top: 24,
     width: 90,
     height: 90,
-    borderRadius: 8,
+    borderRadius: 20,
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -417,6 +435,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fed7aa',
     borderRadius: 8,
   },
+<<<<<<< HEAD
   headerTitle: {
     fontSize: 42,
     fontWeight: '500',
@@ -443,3 +462,12 @@ const styles = StyleSheet.create({
 })
 
 export default ProfileScreen
+=======
+  avatarWrapper: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 20,
+  },
+})
+>>>>>>> a086f7ce4e529aac536cf5df1e522a3d54dcb22e

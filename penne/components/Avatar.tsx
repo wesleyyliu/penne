@@ -96,10 +96,10 @@ export default function Avatar({ url, size = 150, onUpload, upload }: Props) {
         <Image
           source={{ uri: avatarUrl }}
           accessibilityLabel="Avatar"
-          style={[avatarSize, styles.image, { borderRadius: size / 2 }]}
+          style={[avatarSize, styles.image, { borderRadius: 20 }]}
         />
       ) : (
-        <View style={[avatarSize, styles.avatar, styles.noImage, { borderRadius: size / 2 }]} />
+        <View style={[avatarSize, styles.avatar, styles.noImage, { borderRadius: 20 }]} />
       )}
       {upload && (
         <View>

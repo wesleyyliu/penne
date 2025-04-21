@@ -83,7 +83,6 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      navigation.navigate('Auth')
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', error.message)
