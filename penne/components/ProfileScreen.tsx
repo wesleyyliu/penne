@@ -57,16 +57,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
   async function getProfile() {
     try {
-      setLoading(false)
       if (!session?.user) throw new Error('No user on the session!')
 
-      const { data, error, status } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select(`username, full_name, avatar_url`)
-        .eq('id', session?.user.id)
+        .eq('id', session.user.id)
         .single()
 
-      if (error && status !== 406) {
+      if (error) {
         throw error
       }
 
@@ -750,6 +749,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     top: 15,
+  },
+  avatarWrapper: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 20,
   },
   // Friend search modal styles
   modalOverlay: {
