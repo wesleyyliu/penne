@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useRoute } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
+import CheckerboardBackground from '../components/CheckerboardBackground';
 
 // Define route params type
 type RouteParams = {
@@ -119,126 +121,149 @@ const LeaderboardScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E28D61" />
-      </View>
+      <CheckerboardBackground>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E28D61" />
+        </View>
+      </CheckerboardBackground>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
+      <CheckerboardBackground>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </CheckerboardBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>LEADERBOARD</Text>
-      
-      {/* Top 3 Section */}
-      <View style={styles.topThreeContainer}>
-        {/* We'll manually arrange them in podium order: 2nd, 1st, 3rd */}
-        {diningHallRatings.length >= 3 && (
-          <>
-            {/* 2nd Place (Left) */}
-            <View 
-              key={diningHallRatings[1].dining_hall_name} 
-              style={[
-                styles.topCard,
-                { 
-                  backgroundColor: getPositionColor(2),
-                  height: 210,
-                  marginTop: 40 // Push down to make room for 1st place
-                }
-              ]}
-            >
-              <View style={styles.initialCircle}>
-                <Text style={styles.initialText}>{getInitial(diningHallRatings[1].dining_hall_name)}</Text>
-                <View style={styles.rankCircle}>
-                  <Text style={styles.rankText}>2</Text>
-                </View>
-              </View>
-              <Text style={styles.hallName}>
-                {diningHallRatings[1].dining_hall_name}
-              </Text>
-            </View>
+    <CheckerboardBackground>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.contentScroll}>
+          <Text style={styles.title}>LEADERBOARD</Text>
+          
+          <View style={styles.contentCard}>
+            {/* Top 3 Section */}
+            <View style={styles.topThreeContainer}>
+              {/* We'll manually arrange them in podium order: 2nd, 1st, 3rd */}
+              {diningHallRatings.length >= 3 && (
+                <>
+                  {/* 2nd Place (Left) */}
+                  <View 
+                    key={diningHallRatings[1].dining_hall_name} 
+                    style={[
+                      styles.topCard,
+                      { 
+                        backgroundColor: getPositionColor(2),
+                        height: 210,
+                        marginTop: 40 // Push down to make room for 1st place
+                      }
+                    ]}
+                  >
+                    <View style={styles.initialCircle}>
+                      <Text style={styles.initialText}>{getInitial(diningHallRatings[1].dining_hall_name)}</Text>
+                      <View style={styles.rankCircle}>
+                        <Text style={styles.rankText}>2</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.hallName}>
+                      {diningHallRatings[1].dining_hall_name}
+                    </Text>
+                  </View>
 
-            {/* 1st Place (Middle/Center) */}
-            <View 
-              key={diningHallRatings[0].dining_hall_name} 
-              style={[
-                styles.topCard,
-                { 
-                  backgroundColor: getPositionColor(1),
-                  height: 250,
-                  marginTop: 0,
-                  zIndex: 3 // Ensure it's above the others
-                }
-              ]}
-            >
-              <View style={styles.initialCircle}>
-                <Text style={styles.crown}>👑</Text>
-                <Text style={styles.initialText}>{getInitial(diningHallRatings[0].dining_hall_name)}</Text>
-                <View style={styles.rankCircle}>
-                  <Text style={styles.rankText}>1</Text>
-                </View>
-              </View>
-              <Text style={styles.hallName}>
-                {diningHallRatings[0].dining_hall_name}
-              </Text>
-            </View>
+                  {/* 1st Place (Middle/Center) */}
+                  <View 
+                    key={diningHallRatings[0].dining_hall_name} 
+                    style={[
+                      styles.topCard,
+                      { 
+                        backgroundColor: getPositionColor(1),
+                        height: 250,
+                        marginTop: 0,
+                        zIndex: 3 // Ensure it's above the others
+                      }
+                    ]}
+                  >
+                    <View style={styles.initialCircle}>
+                      <Text style={styles.crown}>⭐</Text>
+                      <Text style={styles.initialText}>{getInitial(diningHallRatings[0].dining_hall_name)}</Text>
+                      <View style={styles.rankCircle}>
+                        <Text style={styles.rankText}>1</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.hallName}>
+                      {diningHallRatings[0].dining_hall_name}
+                    </Text>
+                  </View>
 
-            {/* 3rd Place (Right) */}
-            <View 
-              key={diningHallRatings[2].dining_hall_name} 
-              style={[
-                styles.topCard,
-                { 
-                  backgroundColor: getPositionColor(3),
-                  height: 190,
-                  marginTop: 60 // Push down more than 2nd place
-                }
-              ]}
-            >
-              <View style={styles.initialCircle}>
-                <Text style={styles.initialText}>{getInitial(diningHallRatings[2].dining_hall_name)}</Text>
-                <View style={styles.rankCircle}>
-                  <Text style={styles.rankText}>3</Text>
-                </View>
-              </View>
-              <Text style={styles.hallName}>
-                {diningHallRatings[2].dining_hall_name}
-              </Text>
+                  {/* 3rd Place (Right) */}
+                  <View 
+                    key={diningHallRatings[2].dining_hall_name} 
+                    style={[
+                      styles.topCard,
+                      { 
+                        backgroundColor: getPositionColor(3),
+                        height: 190,
+                        marginTop: 60 // Push down more than 2nd place
+                      }
+                    ]}
+                  >
+                    <View style={styles.initialCircle}>
+                      <Text style={styles.initialText}>{getInitial(diningHallRatings[2].dining_hall_name)}</Text>
+                      <View style={styles.rankCircle}>
+                        <Text style={styles.rankText}>3</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.hallName}>
+                      {diningHallRatings[2].dining_hall_name}
+                    </Text>
+                  </View>
+                </>
+              )}
             </View>
-          </>
-        )}
-      </View>
-      
-      {/* Rest of the rankings */}
-      <ScrollView style={styles.rankingsScrollView}>
-        {diningHallRatings.slice(3).map((hall, index) => {
-          const rank = index + 4; // Starting from 4th place
-          return (
-            <View 
-              key={hall.dining_hall_name} 
-              style={[styles.rankingRow, { backgroundColor: getPositionColor(rank) }]}
-            >
-              <Text style={styles.rankNumber}>{rank}th</Text>
-              <View style={styles.rankInitialCircle}>
-                <Text style={styles.rankInitialText}>{getInitial(hall.dining_hall_name)}</Text>
-              </View>
-              <Text style={styles.rankHallName}>{hall.dining_hall_name}</Text>
+            
+            {/* Rest of the rankings */}
+            <View style={styles.rankingsContainer}>
+              {diningHallRatings.slice(3).map((hall, index) => {
+                const rank = index + 4; // Starting from 4th place
+                return (
+                  <View 
+                    key={hall.dining_hall_name} 
+                    style={[styles.rankingRow, { backgroundColor: getPositionColor(rank) }]}
+                  >
+                    <Text style={styles.rankNumber}>{rank}th</Text>
+                    <View style={styles.rankInitialCircle}>
+                      <Text style={styles.rankInitialText}>{getInitial(hall.dining_hall_name)}</Text>
+                    </View>
+                    <Text style={styles.rankHallName}>{hall.dining_hall_name}</Text>
+                  </View>
+                );
+              })}
             </View>
-          );
-        })}
-      </ScrollView>
-    </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </CheckerboardBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  contentScroll: {
+    flex: 1,
+  },
+  contentCard: {
+    backgroundColor: '#fef8f0',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingBottom: 20,
+    marginBottom: 20,
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8F3EB', // Light cream background
@@ -260,19 +285,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 42,
+    fontWeight: '500',
     textAlign: 'center',
-    marginTop: 80,
-    marginBottom: 40,
+    marginTop: 30,
+    marginBottom: 50,
     color: '#7E8B5F', // Green color from the image
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   topThreeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     height: 280, // Increased height to accommodate taller podium
     marginBottom: 20,
-    marginTop: 20,
+    marginTop: 80,
   },
   topCard: {
     width: '30%',
@@ -299,6 +327,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#333',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   rankCircle: {
     position: 'absolute',
@@ -317,6 +346,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#E28D61',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   hallName: {
     color: 'white',
@@ -326,8 +356,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 5,
   },
-  rankingsScrollView: {
-    flex: 1,
+  rankingsContainer: {
+    paddingBottom: 20,
   },
   rankingRow: {
     flexDirection: 'row',
@@ -341,6 +371,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   rankInitialCircle: {
     width: 50,
@@ -355,6 +386,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   rankHallName: {
     fontSize: 16,
