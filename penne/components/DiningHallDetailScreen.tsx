@@ -37,7 +37,7 @@ type DiningHallDetailProps = {
 };
 
 const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
-  const { hallName, session } = route.params;
+  const { hallName, rank, session } = route.params;
   
   // Store slider track width
   const [sliderTrackWidth, setSliderTrackWidth] = useState(270);
@@ -713,7 +713,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       
       {/* Header Image */}
       <Image
@@ -762,7 +762,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{hallName}</Text>
             <View style={styles.rankBadge}>
-              <Text style={styles.rankText}>#1</Text>
+              <Text style={styles.rankText}>#{rank}</Text>
             </View>
           </View>
 
@@ -1079,7 +1079,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#fef8f0',
   },
   headerImage: {
     width: '100%',
@@ -1124,7 +1124,7 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fef8f0',
     marginTop: -20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -1204,10 +1204,12 @@ const styles = StyleSheet.create({
   },
   // Menu styling
   menuContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'transparent',
     borderRadius: 15,
     overflow: 'hidden',
     marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#E0D8C0',
   },
   menuItem: {
     flexDirection: 'row',
@@ -1215,8 +1217,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     paddingHorizontal: 15,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: '#F0F0F0',
+    backgroundColor: 'transparent',
   },
   menuItemDetails: {
     flex: 1,
@@ -1225,7 +1228,7 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#555',
+    color: '#8a8568',
   },
   reactions: {
     flexDirection: 'row',
@@ -1233,8 +1236,8 @@ const styles = StyleSheet.create({
   reactionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F6EED8',
-    borderRadius: 20,
+    backgroundColor: '#f6eed8',
+    borderRadius: 25,
     overflow: 'hidden',
   },
   reactionButton: {

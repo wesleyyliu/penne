@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 // Main navigation stack params
 export type RootStackParamList = {
     DiningHallsScreen: { session?: Session };
-    DiningHallDetail: { hallName: string; session?: Session };
+    DiningHallDetail: { hallName: string; rank: number; session?: Session };
     Feed: { diningHallName?: string; session?: Session };
   };
 

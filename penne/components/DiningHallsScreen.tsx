@@ -61,11 +61,16 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
 
   // Navigation function with typed parameters
   const navigateToDetail = useCallback((hallName: string) => {
+    // Find the rank of the hall in our data
+    const hallData = diningHalls.find(hall => hall.dining_hall_name === hallName);
+    const rank = hallData ? hallData.rank : 0;
+    
     navigation.navigate('DiningHallDetail', {
       hallName,
+      rank,
       session
     });
-  }, [navigation, session]);
+  }, [navigation, session, diningHalls]);
 
   // Function to get the day and date
   useEffect(() => {
