@@ -199,26 +199,43 @@ const FeedScreen = () => {
     ]}>
       {/* User Info */}
       <View style={styles.postHeader}>
-        <View style={styles.userContainer}>
-          <View style={styles.avatarContainer}>
-            {item.profiles?.avatar_url ? (
-              <Avatar url={item.profiles.avatar_url} size={48} onUpload={() => {}} upload={false} isCircle={true}/>
-            ) : (
-              <Text style={styles.avatarFallback}>U</Text>
-            )}
-          </View>
-          
+        <View style={styles.avatarContainer}>
+          {item.profiles?.avatar_url ? (
+            <Avatar url={item.profiles.avatar_url} size={48} onUpload={() => {}} upload={false} isCircle={true}/>
+          ) : (
+            <Text style={styles.avatarFallback}>U</Text>
+          )}
+        </View>
+        
+        <View style={styles.userInfoColumn}>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{item.profiles?.full_name || 'Name'}</Text>
             <Text style={styles.userHandle}>@{item.profiles?.username || 'username'} · {item.dining_hall}</Text>
           </View>
+          
+          {/* Post Content - Aligned with name */}
+          <View style={styles.contentContainer}>
+            <Text style={styles.postContent}>{item.body}</Text>
+          </View>
+          
+          {/* Footer with timestamp and actions */}
+          <View style={styles.postFooter}>
+            <Text style={styles.timeAgo}>{formatTimeAgo(item.created_at)}</Text>
+            
+            <View style={styles.actionsContainer}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="heart-outline" size={22} color="#c1abc0" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="chatbubble-outline" size={20} color="#c1abc0" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="arrow-redo-outline" size={22} color="#c1abc0" />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-        
-        <Text style={styles.timeAgo}>{formatTimeAgo(item.created_at)}</Text>
       </View>
-      
-      {/* Post Content */}
-      <Text style={styles.postContent}>{item.body}</Text>
       
       {/* Post Image (if available) */}
       {item.image_url && (
@@ -228,53 +245,31 @@ const FeedScreen = () => {
           resizeMode="cover"
         />
       )}
-      
-      {/* Action Buttons */}
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="heart-outline" size={22} color="#a8a29e" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="chatbubble-outline" size={20} color="#a8a29e" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="arrow-redo-outline" size={22} color="#a8a29e" />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 
   return (
     <CheckerboardBackground>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>YOUR FEED</Text>
-          </View>
-          
-          {/* Posts List */}
-          {loading && !refreshing ? (
-            <ActivityIndicator size="large" color="#E28D61" style={styles.loader} />
-          ) : (
-            <FlatList
-              data={posts}
-              keyExtractor={(item) => item.id}
-              renderItem={renderPostItem}
-              contentContainerStyle={styles.listContent}
-              onRefresh={handleRefresh}
-              refreshing={refreshing}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No posts yet</Text>
-                  <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
-                </View>
-              }
-            />
-          )}
-        </View>
+        <FlatList
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>YOUR FEED</Text>
+            </View>
+          }
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={renderPostItem}
+          contentContainerStyle={styles.listContent}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No posts yet</Text>
+              <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
+            </View>
+          }
+        />
       </SafeAreaView>
       
       {/* Post Modal */}
@@ -357,15 +352,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 0,
-  },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
+    paddingVertical: 20,
     paddingHorizontal: 16,
   },
   headerTitle: {
@@ -375,6 +364,7 @@ const styles = StyleSheet.create({
     color: '#787b46',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
     textTransform: 'uppercase',
+    paddingBottom: 20,
   },
   listContent: {
     paddingBottom: 80,
@@ -382,6 +372,7 @@ const styles = StyleSheet.create({
   postCard: {
     backgroundColor: '#fef8f0',
     padding: 16,
+    paddingBottom: 8,
     marginBottom: 1,
     width: '100%',
   },
@@ -395,13 +386,8 @@ const styles = StyleSheet.create({
   },
   postHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
-  },
-  userContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   avatarContainer: {
     width: 48,
@@ -411,11 +397,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    marginTop: 12,
   },
   avatarFallback: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  userInfoColumn: {
+    flex: 1,
   },
   userInfo: {
     flexDirection: 'column',
@@ -423,35 +413,42 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#44403c',
+    color: '#857a5c',
     marginBottom: 2,
   },
   userHandle: {
     fontSize: 14,
-    color: '#78716c',
+    color: '#ab9e76',
   },
-  timeAgo: {
-    fontSize: 14,
-    color: '#a8a29e',
+  contentContainer: {
+    marginTop: 8,
   },
   postContent: {
     fontSize: 16,
     lineHeight: 22,
-    color: '#44403c',
-    marginBottom: 16,
+    color: '#857a5c',
+    marginBottom: 8,
   },
   postImage: {
     width: '100%',
     height: 200,
     borderRadius: 0,
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+  postFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeAgo: {
+    fontSize: 14,
+    color: '#c1abc0',
   },
   actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
   },
   actionButton: {
-    marginRight: 20,
+    marginLeft: 10,
     padding: 4,
   },
   loader: {
