@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../screens/types';
@@ -33,8 +33,31 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
   const navigation = useNavigation<DiningHallsScreenNavigationProp>();
   const [diningHalls, setDiningHalls] = useState<DiningHallRating[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState('');
+  const [currentDate, setCurrentDate] = useState({ dayName: '', monthDay: '' });
   const { session } = route.params || {};
+
+  // Add state to track text measurements
+  const [textMeasurements, setTextMeasurements] = useState<{[key: string]: {width: number, height: number}}>({});
+  
+  // Add state to track card heights
+  const [card3Height, setCard3Height] = useState(230);
+  
+  // Function to handle text measurement
+  const onTextLayout = useCallback((event: any, hallName: string) => {
+    const { width, height } = event.nativeEvent.layout;
+    // Cap the height to avoid infinite growth
+    const cappedHeight = Math.min(height, 100);
+    setTextMeasurements(prev => ({
+      ...prev,
+      [hallName]: { width, height: cappedHeight }
+    }));
+  }, []);
+
+  // Add a function to handle card 3's height measurement
+  const onCard3Layout = useCallback((event: any) => {
+    const { height } = event.nativeEvent.layout;
+    setCard3Height(height);
+  }, []);
 
   // Navigation function with typed parameters
   const navigateToDetail = useCallback((hallName: string) => {
@@ -50,7 +73,10 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'numeric', day: 'numeric' };
     const formattedDate = date.toLocaleDateString('en-US', options).toUpperCase();
     const [dayName, monthDay] = formattedDate.split(', ');
-    setCurrentDate(`${dayName}\n${monthDay.replace('/', '/')}`);
+    setCurrentDate({
+      dayName,
+      monthDay: monthDay.replace('/', '/')
+    });
   }, []);
 
   // Function to determine position-based color
@@ -121,43 +147,89 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
         try {
           setLoading(true);
           
-          // Using the same logic as in LeaderboardScreen
-          const { data, error } = await supabase
-            .from('dining_hall_ratings')
-            .select('dining_hall_name, score');
+          // Step 1: Get all dining halls from the dining_halls table first
+          const { data: diningHallsData, error: diningHallsError } = await supabase
+            .from('dining_halls')
+            .select('name');
           
-          if (error) throw error;
+          if (diningHallsError) throw diningHallsError;
           
-          if (data) {
-            // Group and calculate average score for each dining hall
-            const hallScores: Record<string, { total: number, count: number }> = {};
-            
-            data.forEach(rating => {
-              if (!hallScores[rating.dining_hall_name]) {
-                hallScores[rating.dining_hall_name] = { total: 0, count: 0 };
-              }
-              hallScores[rating.dining_hall_name].total += rating.score;
-              hallScores[rating.dining_hall_name].count += 1;
-            });
-            
-            // Calculate average and create sorted array
-            const ratingsList = Object.entries(hallScores).map(([name, scores]) => ({
-              dining_hall_name: name,
-              average_score: scores.total / scores.count,
-              rank: 0,
-              letter: getInitial(name)
-            }));
-            
-            // Sort by average score (descending)
-            ratingsList.sort((a, b) => b.average_score - a.average_score);
-            
-            // Assign ranks
-            ratingsList.forEach((hall, index) => {
-              hall.rank = index + 1;
-            });
-            
-            setDiningHalls(ratingsList);
+          if (!diningHallsData) {
+            throw new Error('No dining halls found');
           }
+          
+          // Create initial map of all dining halls with default values
+          const hallScores: Record<string, { total: number, count: number, userRated: boolean }> = {};
+          
+          // Initialize all dining halls with default values
+          diningHallsData.forEach(hall => {
+            hallScores[hall.name] = { total: 0, count: 0, userRated: false };
+          });
+          
+          // Step 2: Check if user is logged in to get their ratings
+          if (session?.user) {
+            // First get user's ratings
+            const { data: userRatings, error: userRatingsError } = await supabase
+              .from('dining_hall_ratings')
+              .select('dining_hall_name, score')
+              .eq('user_id', session.user.id);
+            
+            if (userRatingsError) throw userRatingsError;
+            
+            // Apply user ratings to the map
+            if (userRatings && userRatings.length > 0) {
+              userRatings.forEach(rating => {
+                if (!hallScores[rating.dining_hall_name]) {
+                  hallScores[rating.dining_hall_name] = { total: 0, count: 0, userRated: false };
+                }
+                hallScores[rating.dining_hall_name].total = rating.score;
+                hallScores[rating.dining_hall_name].count = 1;
+                hallScores[rating.dining_hall_name].userRated = true;
+              });
+            }
+          }
+          
+          // Step 3: For dining halls not rated by user, get ratings from all users
+          const unratedHalls = Object.keys(hallScores).filter(
+            hallName => !hallScores[hallName].userRated
+          );
+          
+          if (unratedHalls.length > 0) {
+            const { data: globalRatings, error: globalRatingsError } = await supabase
+              .from('dining_hall_ratings')
+              .select('dining_hall_name, score')
+              .in('dining_hall_name', unratedHalls);
+            
+            if (globalRatingsError) throw globalRatingsError;
+            
+            if (globalRatings) {
+              // Group and calculate average score for unrated dining halls
+              globalRatings.forEach(rating => {
+                if (!hallScores[rating.dining_hall_name].userRated) {
+                  hallScores[rating.dining_hall_name].total += rating.score;
+                  hallScores[rating.dining_hall_name].count += 1;
+                }
+              });
+            }
+          }
+          
+          // Calculate average and create sorted array
+          const ratingsList = Object.entries(hallScores).map(([name, scores]) => ({
+            dining_hall_name: name,
+            average_score: scores.count > 0 ? scores.total / scores.count : 0,
+            rank: 0,
+            letter: getInitial(name)
+          }));
+          
+          // Sort by average score (descending)
+          ratingsList.sort((a, b) => b.average_score - a.average_score);
+          
+          // Assign ranks
+          ratingsList.forEach((hall, index) => {
+            hall.rank = index + 1;
+          });
+          
+          setDiningHalls(ratingsList);
         } catch (err) {
           console.error('Error fetching dining hall ratings:', err);
         } finally {
@@ -166,7 +238,7 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
       };
 
       fetchDiningHallRatings();
-    }, [])
+    }, [session])
   );
 
   return (
@@ -181,7 +253,10 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
             />
             <Text style={styles.logoText}>ME</Text>
           </View>
-          <Text style={styles.dateText}>{currentDate}</Text>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dayNameText}>{currentDate.dayName}</Text>
+            <Text style={styles.monthDayText}>{currentDate.monthDay}</Text>
+          </View>
         </View>
 
         <View style={styles.contentCard}>
@@ -197,12 +272,16 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                     style={[
                       styles.diningHallCard,
                       styles.hall1Card,
-                      { backgroundColor: getPositionColor(1) }
+                      { 
+                        backgroundColor: getPositionColor(1),
+                        height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
+                      }
                     ]}
                     onPress={() => navigateToDetail(diningHalls[0].dining_hall_name)}
                   >
                     <View style={[
                       styles.hallInitial,
+                      styles.hallInitial1,
                       { backgroundColor: getInitialBoxColor(1) }
                     ]}>
                       <Text style={styles.initialText}>{diningHalls[0].letter}</Text>
@@ -213,7 +292,12 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                         { color: getRankNumberColor(1) }
                       ]}>#1</Text>
                     </View>
-                    <Text style={[styles.hallName, styles.hallNameFirst]}>
+                    <Text 
+                      style={styles.hallName1}
+                      onLayout={(e) => onTextLayout(e, diningHalls[0]?.dining_hall_name)}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
                       {diningHalls[0].dining_hall_name}
                     </Text>
                   </TouchableOpacity>
@@ -224,12 +308,16 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                     style={[
                       styles.diningHallCard,
                       styles.hall2Card,
-                      { backgroundColor: getPositionColor(2) }
+                      { 
+                        backgroundColor: getPositionColor(2),
+                        height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
+                      }
                     ]}
                     onPress={() => navigateToDetail(diningHalls[1].dining_hall_name)}
                   >
                     <View style={[
                       styles.hallInitial,
+                      styles.hallInitial2,
                       { backgroundColor: getInitialBoxColor(2) }
                     ]}>
                       <Text style={styles.initialText}>{diningHalls[1].letter}</Text>
@@ -240,7 +328,12 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                         { color: getRankNumberColor(2) }
                       ]}>#2</Text>
                     </View>
-                    <Text style={[styles.hallName, styles.hallNameSecond]}>
+                    <Text 
+                      style={styles.hallName2}
+                      onLayout={(e) => onTextLayout(e, diningHalls[1]?.dining_hall_name)}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
                       {diningHalls[1].dining_hall_name}
                     </Text>
                   </TouchableOpacity>
@@ -257,20 +350,27 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                       { backgroundColor: getPositionColor(3) }
                     ]}
                     onPress={() => navigateToDetail(diningHalls[2].dining_hall_name)}
+                    onLayout={onCard3Layout}
                   >
                     <View style={[
                       styles.hallInitial,
+                      styles.hallInitial3,
                       { backgroundColor: getInitialBoxColor(3) }
                     ]}>
                       <Text style={styles.initialText}>{diningHalls[2].letter}</Text>
                     </View>
-                    <View style={styles.hallInfo}>
+                    <View style={styles.hallInfo3}>
                       <Text style={[
                         styles.rankNumber,
                         { color: getRankNumberColor(3) }
                       ]}>#3</Text>
                     </View>
-                    <Text style={[styles.hallName, styles.hallNameThird]}>
+                    <Text 
+                      style={styles.hallName3}
+                      onLayout={(e) => onTextLayout(e, diningHalls[2]?.dining_hall_name)}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
+                    >
                       {diningHalls[2].dining_hall_name}
                     </Text>
                   </TouchableOpacity>
@@ -295,7 +395,14 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                 ]}>
                   <Text style={styles.initialText}>{hall.letter}</Text>
                 </View>
-                <Text style={styles.hallName}>{hall.dining_hall_name}</Text>
+                <Text 
+                  style={styles.hallName}
+                  onLayout={(e) => onTextLayout(e, hall.dining_hall_name)}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {hall.dining_hall_name}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -325,24 +432,36 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: 'bold',
     color: '#635E4A',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   logoImage: {
     width: 40,
     height: 40,
     resizeMode: 'contain',
   },
-  dateText: {
-    fontSize: 20,
+  dateContainer: {
+    alignItems: 'flex-end',
+  },
+  dayNameText: {
+    fontSize: 30,
     fontWeight: '500',
-    color: '#635E4A',
+    color: '#a4a985', // Orange color matching the app's theme
     textAlign: 'right',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+  },
+  monthDayText: {
+    fontSize: 30,
+    fontWeight: '500',
+    color: '#c9bd8b', // Original color
+    textAlign: 'right',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   contentCard: {
     backgroundColor: '#fef8f0',
     borderRadius: 30,
     marginTop: 20,
     marginHorizontal: 0,
-    marginBottom: 0,
+    marginBottom: 60,
     padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -363,35 +482,43 @@ const styles = StyleSheet.create({
   topLayout: {
     flexDirection: 'row',
     gap: 15,
-    height: 230,
+    minHeight: 230,
     marginBottom: 15,
   },
   leftColumn: {
-    flex: 1,
+    width: '60%',
     flexDirection: 'column',
     gap: 15,
   },
   rightColumn: {
-    flex: 1,
+    width: '40%',
+    paddingRight: 20,
   },
   diningHallCard: {
     borderRadius: 20,
     padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
     position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
   },
   hall1Card: {
-    flex: 1,
+    flex: 0,
+    minHeight: 110,
+    width: '100%',
   },
   hall2Card: {
-    flex: 1,
+    flex: 0,
+    minHeight: 110,
+    width: '100%',
   },
   hall3Card: {
-    height: '100%',
+    height: 'auto',
+    minHeight: 230,
+    width: '100%',
   },
   fullWidthCard: {
-    height: 80,
+    minHeight: 80,
+    height: 'auto',
   },
   hallInitial: {
     width: 60,
@@ -399,12 +526,11 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
   },
   initialText: {
     fontSize: 36,
-    fontWeight: 'bold',
     color: 'white',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   hallInfo: {
     position: 'absolute',
@@ -414,32 +540,72 @@ const styles = StyleSheet.create({
   rankNumber: {
     fontSize: 36,
     fontWeight: 'bold',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   hallName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
-    marginLeft: 10,
+    position: 'absolute',
+    left: 90,
+    top: 35,
     flex: 1,
     flexWrap: 'wrap',
+    paddingRight: 10,
+    paddingBottom: 10,
+    width: '70%',
   },
-  hallNameFirst: {
+  hallInitial1: {
+    position: 'absolute',
+    left: 15,
+    top: 15,
+    height: 80,
+    width: 80,
+  },
+  hallName1: {
+    position: 'absolute',
+    bottom: 15,
+    left: 110,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    width: '60%',
+    paddingRight: 10,
+  },
+  hallInitial2: {
+    position: 'absolute',
+    left: 15,
+    top: 15,
+  },
+  hallName2: {
     position: 'absolute',
     bottom: 15,
     left: 90,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
     width: '60%',
+    paddingRight: 10,
   },
-  hallNameSecond: {
+  hallInitial3: {
     position: 'absolute',
+    right: 15,
+    top: 15,
+  },
+  hallInfo3: {
+    position: 'absolute',
+    left: 15,
+    bottom: 70,
+  },
+  hallName3: {
+    position: 'absolute',
+    left: 15,
     bottom: 15,
-    left: 90,
-    width: '60%',
-  },
-  hallNameThird: {
-    position: 'absolute',
-    bottom: 15, 
-    left: 90,
-    width: '60%',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    width: '80%',
+    paddingRight: 10,
   },
 });
 
