@@ -715,49 +715,39 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Header Image */}
-      <Image
-        source={getHeaderImage()}
-        style={styles.headerImage}
-        onError={() => setImageError(true)}
-      />
-      
-      {/* Back Button */}
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
+      {/* Main Scrollable Content */}
+      <ScrollView 
+        style={styles.mainScrollView}
+        showsVerticalScrollIndicator={false}
       >
-        <Ionicons name="chevron-back" size={24} color="#FFF" />
-      </TouchableOpacity>
-      
-      {/* Action Buttons Group */}
-      <View style={styles.actionButtonsGroup}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => setPhotoModalVisible(true)}
-        >
-          <Ionicons name="camera-outline" size={20} color="#555" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => setCommentModalVisible(true)}
-        >
-          <Ionicons name="chatbubble-outline" size={20} color="#555" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => setSurveyVisible(true)}
-        >
-          <Ionicons name="add-outline" size={20} color="#555" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Content Area */}
-      <View style={styles.contentArea}>
-        <ScrollView 
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
+        {/* Header Image */}
+        <Image
+          source={getHeaderImage()}
+          style={styles.headerImage}
+          onError={() => setImageError(true)}
+        />
+        
+        {/* Action Buttons Group - now inside the ScrollView, relative positioning */}
+        <View style={styles.actionButtonsRelative}>
+          <TouchableOpacity 
+            onPress={() => setPhotoModalVisible(true)}
+          >
+            <Ionicons name="camera-outline" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setCommentModalVisible(true)}
+          >
+            <Ionicons name="chatbubble-outline" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setSurveyVisible(true)}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+        
+        {/* Content Area */}
+        <View style={styles.contentArea}>
           {/* Hall Name and Rank */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{hallName}</Text>
@@ -822,27 +812,39 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
                   <View style={styles.reactions}>
                     <View style={styles.reactionContainer}>
                       <TouchableOpacity 
-                        style={styles.reactionButton}
+                        style={styles.reactionButtonLeft}
                         onPress={() => handleUpvote(dish.id)}
                       >
                         <Ionicons 
                           name={userVotes[dish.id]?.upvoted ? "heart" : "heart-outline"} 
                           size={18} 
-                          color="#555" 
+                          color={userVotes[dish.id]?.upvoted ? "#E28D61" : '#8c9657'} 
                         />
-                        <Text style={styles.reactionCount}>{dish.dish_upvote}</Text>
+                        <Text style={[
+                          styles.like, 
+                          userVotes[dish.id]?.upvoted ? styles.activeVote : null
+                        ]}>
+                          {dish.dish_upvote}
+                        </Text>
                       </TouchableOpacity>
+                      
                       <View style={styles.divider} />
+                      
                       <TouchableOpacity 
-                        style={styles.reactionButton}
+                        style={styles.reactionButtonRight}
                         onPress={() => handleDownvote(dish.id)}
                       >
                         <Ionicons 
                           name={userVotes[dish.id]?.downvoted ? "thumbs-down" : "thumbs-down-outline"} 
                           size={18} 
-                          color="#555" 
+                          color={userVotes[dish.id]?.downvoted ? "#E28D61" : '#8c9657'} 
                         />
-                        <Text style={styles.reactionCount}>{dish.dish_downvote}</Text>
+                        <Text style={[
+                          styles.dislike,
+                          userVotes[dish.id]?.downvoted ? styles.activeVote : null
+                        ]}>
+                          {dish.dish_downvote}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -857,14 +859,14 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
                   </View>
                   <View style={styles.reactions}>
                     <View style={styles.reactionContainer}>
-                      <TouchableOpacity style={styles.reactionButton}>
-                        <Ionicons name="heart-outline" size={18} color="#555" />
-                        <Text style={styles.reactionCount}>200</Text>
+                      <TouchableOpacity style={styles.reactionButtonLeft}>
+                        <Ionicons name="heart-outline" size={18} color="#8c9657" />
+                        <Text style={styles.like}>200</Text>
                       </TouchableOpacity>
                       <View style={styles.divider} />
-                      <TouchableOpacity style={styles.reactionButton}>
-                        <Ionicons name="thumbs-down-outline" size={18} color="#555" />
-                        <Text style={styles.reactionCount}>100</Text>
+                      <TouchableOpacity style={styles.reactionButtonRight}>
+                        <Ionicons name="thumbs-down-outline" size={18} color="#8c9657" />
+                        <Text style={styles.dislike}>100</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -874,8 +876,16 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
           ) : (
             <Text style={styles.noMenu}>No menu available</Text>
           )}
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
+      
+      {/* Back Button - positioned absolutely */}
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="chevron-back" size={24} color="#FFF" />
+      </TouchableOpacity>
 
       {/* Survey Rating Modal */}
       <Modal visible={surveyVisible} transparent animationType="fade">
@@ -1081,11 +1091,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fef8f0',
   },
+  mainScrollView: {
+    flex: 1,
+  },
   headerImage: {
     width: '100%',
     height: 280,
     resizeMode: 'cover',
-    borderRadius: 20,
+    marginBottom: -30
   },
   backButton: {
     position: 'absolute',
@@ -1099,40 +1112,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionButtonsGroup: {
-    position: 'absolute',
-    top: 245,
-    left: 0,
-    right: 0,
-    zIndex: 10,
+  actionButtonsRelative: {
+    alignSelf: 'center',
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  actionButton: {
-    width: 40,
-    height: 40,
+    gap: 15,
+    backgroundColor: '#ba9cba',
+    padding: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    zIndex: 10,
+    elevation: 5,
+    marginTop: -20,
+    marginBottom: 0,
   },
   contentArea: {
-    flex: 1,
     backgroundColor: '#fef8f0',
-    marginTop: -20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-  },
-  scrollView: {
-    flex: 1,
-    paddingTop: 25,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 70,
+    paddingBottom: 30,
+    marginTop: -30,
   },
   titleContainer: {
     flexDirection: 'row',
@@ -1143,8 +1141,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontFamily: 'serif',
-    color: '#566D55',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    color: '#838c58',
     fontWeight: '500',
   },
   rankBadge: {
@@ -1236,25 +1234,40 @@ const styles = StyleSheet.create({
   reactionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f6eed8',
-    borderRadius: 25,
+    backgroundColor: '#ebdeb0',
+    borderRadius: 16,
     overflow: 'hidden',
   },
-  reactionButton: {
+  reactionButtonLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  reactionCount: {
-    marginLeft: 5,
-    fontWeight: '500',
-    color: '#555',
+  reactionButtonRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   divider: {
     width: 1,
     height: '70%',
-    backgroundColor: '#E0D8C0',
+    backgroundColor: '#c8b56f',
+  },
+  like: { 
+    marginLeft: 5,
+    fontWeight: '500',
+    color: '#8c9657',
+  },
+  dislike: { 
+    marginLeft: 5,
+    fontWeight: '500',
+    color: '#8c9657',
+  },
+  activeVote: { 
+    fontWeight: 'bold', 
+    color: '#E28D61'
   },
   loader: {
     marginVertical: 30,
