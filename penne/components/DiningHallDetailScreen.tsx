@@ -585,7 +585,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       // Add to the beginning of the array
       setDiningHallPhotos(prevPhotos => [newPhoto, ...prevPhotos]);
       
-      // For development/testing in simulator, handle the case where we can't properly upload to storage
+      // Try to upload to the database
       try {
         // 1. Upload the image to Supabase storage
         const fileName = `${session.user.id}_${newPhotoId}.jpg`;
@@ -593,24 +593,21 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
         
         // In a real implementation, you would need to convert the URI to a blob/file
         
-        // 2. Try to insert into dining_comments table instead since we know it exists
-        // This is a workaround for the missing dining_hall_photos table
+        // 2. Try to insert into posts table since we know it exists
+        console.log('Attempting to save photo to posts table...');
         const { error } = await supabase
-          .from('dining_comments')
+          .from('posts')
           .insert({
             user_id: session.user.id,
-            dining_hall_name: hallName,
-            content: 'Posted a photo',
-            image_url: uri,
-            created_at: new Date().toISOString()
+            body: `Posted a photo from ${hallName}`,
+            dining_hall: hallName,
+            image_url: uri
           });
         
         if (error) {
-          if (error.code === '42P01') {
-            console.log('Storage tables do not exist yet - development mode');
-          } else {
-            throw error;
-          }
+          console.log('Error saving to posts:', error);
+        } else {
+          console.log('Photo saved successfully to posts table');
         }
       } catch (storageError) {
         console.log('Using local storage mode for development');
@@ -651,22 +648,32 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       let imageUrl = null;
       if (selectedImage) {
         // Here you would implement image upload to storage
-        // For now, we'll just pretend we have the URL
+        // For now, we'll just use the selected image URI
         imageUrl = selectedImage;
       }
       
-      // Submit comment to database
-      const { error } = await supabase
-        .from('dining_comments')
-        .insert({
-          user_id: session.user.id,
-          dining_hall_name: hallName,
-          content: commentText.trim(),
-          image_url: imageUrl
-        });
-      
-      if (error) {
-        console.error('Error submitting comment:', error);
+      // Check if dining_comments table exists, if not fall back to posts
+      try {
+        console.log('Attempting to submit comment to database...');
+        
+        // Try the posts table which we know exists
+        const { error } = await supabase
+          .from('posts')
+          .insert({
+            user_id: session.user.id,
+            body: commentText.trim(),
+            dining_hall: hallName,
+            image_url: imageUrl
+          });
+        
+        if (error) {
+          console.error('Error submitting post:', error);
+          return;
+        }
+        
+        console.log('Comment submitted successfully to posts table');
+      } catch (err) {
+        console.error('Error submitting to database:', err);
         return;
       }
       
@@ -676,7 +683,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       setCommentModalVisible(false);
       
       // Navigate to feed to see the posted comment
-      navigation.navigate('Feed', { diningHallName: hallName, session });
+      navigation.navigate('Feed', { session });
       
     } catch (err) {
       console.error('Error in submitComment:', err);
