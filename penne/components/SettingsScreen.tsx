@@ -4,6 +4,7 @@ import { Session } from '@supabase/supabase-js'
 import { useRoute } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { RouteProp } from '@react-navigation/native'
+import { supabase } from '../lib/supabase'
 
 type SettingsScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>
 
@@ -42,8 +43,15 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
     }
   ]
 
-  const handleLogout = async () => {
-    // Add supabase logout logic here
+  async function handleSignOut() {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message)
+      }
+    }
   }
 
   return (
@@ -81,7 +89,7 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
             {/* Logout Button */}
             <TouchableOpacity 
               style={styles.logoutButton}
-              onPress={handleLogout}
+              onPress={handleSignOut}
             >
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
