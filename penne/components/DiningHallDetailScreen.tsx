@@ -667,7 +667,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
             user_id: session.user.id,
             body: commentText.trim(),
             dining_hall: hallName,
-            image_url: imageUrl
+            // image_url: imageUrl
           });
         
         if (error) {
