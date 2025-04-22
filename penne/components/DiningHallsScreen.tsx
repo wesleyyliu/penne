@@ -275,6 +275,13 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                       { 
                         backgroundColor: getPositionColor(1),
                         height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
+                        shadowColor: getInitialBoxColor(1),
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 1,
+                        elevation: 5,
+                        borderBottomWidth: 4,
+                        borderColor: getInitialBoxColor(1),
                       }
                     ]}
                     onPress={() => navigateToDetail(diningHalls[0].dining_hall_name)}
@@ -311,6 +318,13 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                       { 
                         backgroundColor: getPositionColor(2),
                         height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
+                        shadowColor: getInitialBoxColor(2),
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 1,
+                        elevation: 5,
+                        borderBottomWidth: 4,
+                        borderColor: getInitialBoxColor(2),
                       }
                     ]}
                     onPress={() => navigateToDetail(diningHalls[1].dining_hall_name)}
@@ -347,7 +361,16 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                     style={[
                       styles.diningHallCard,
                       styles.hall3Card,
-                      { backgroundColor: getPositionColor(3) }
+                      { 
+                        backgroundColor: getPositionColor(3),
+                        shadowColor: getInitialBoxColor(3),
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 1,
+                        elevation: 5,
+                        borderBottomWidth: 4,
+                        borderColor: getInitialBoxColor(3),
+                      }
                     ]}
                     onPress={() => navigateToDetail(diningHalls[2].dining_hall_name)}
                     onLayout={onCard3Layout}
@@ -385,7 +408,16 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
                 style={[
                   styles.diningHallCard,
                   styles.fullWidthCard,
-                  { backgroundColor: getPositionColor(index + 4) }
+                  { 
+                    backgroundColor: getPositionColor(index + 4),
+                    shadowColor: getInitialBoxColor(index + 4),
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.5,
+                    shadowRadius: 1,
+                    elevation: 5,
+                    borderBottomWidth: 4,
+                    borderColor: getInitialBoxColor(index + 4),
+                  }
                 ]}
                 onPress={() => navigateToDetail(hall.dining_hall_name)}
               >
@@ -431,7 +463,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#635E4A',
+    color: '#838c58',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   logoImage: {
@@ -440,6 +472,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   dateContainer: {
+    marginTop: 20,
     alignItems: 'flex-end',
   },
   dayNameText: {
@@ -471,8 +504,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: '500',
-    color: '#635E4A',
+    fontWeight: 'bold',
+    color: '#958967',
     marginBottom: 20,
   },
   diningHallsGrid: {
@@ -559,13 +592,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 15,
     top: 15,
-    height: 80,
-    width: 80,
   },
   hallName1: {
     position: 'absolute',
-    bottom: 15,
-    left: 110,
+    bottom: 25,
+    left: 90,
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
@@ -579,7 +610,7 @@ const styles = StyleSheet.create({
   },
   hallName2: {
     position: 'absolute',
-    bottom: 15,
+    bottom: 25,
     left: 90,
     fontSize: 16,
     fontWeight: 'bold',
