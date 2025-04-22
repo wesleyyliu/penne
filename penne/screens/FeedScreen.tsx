@@ -16,70 +16,87 @@ import { supabase } from '../lib/supabase';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import CheckerboardBackground from '../components/CheckerboardBackground';
+import { Session } from '@supabase/supabase-js';
 
-interface Comment {
+// Post interface based on the schema from DiningHallDetailScreen
+interface Post {
   id: string;
   user_id: string;
-  dining_hall_name: string;
-  content: string;
+  body: string;
+  dining_hall: string;
   created_at: string;
-  profiles: {
+  image_url?: string;
+  profiles?: {
     username: string;
     full_name: string;
     avatar_url: string;
   };
 }
 
-type FeedScreenRouteProp = RouteProp<{ params: { diningHallName?: string } }, 'params'>;
+type FeedScreenRouteProp = RouteProp<{ 
+  params: { 
+    diningHallName?: string;
+    session?: Session;
+    openModal?: boolean;
+  } 
+}, 'params'>;
 
 const FeedScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<FeedScreenRouteProp>();
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [postModalVisible, setPostModalVisible] = useState(false);
   const [activeHallName, setActiveHallName] = useState('');
-  const [newComment, setNewComment] = useState('');
+  const [newPost, setNewPost] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { session } = route.params || {};
 
   useEffect(() => {
-    fetchComments();
+    fetchPosts();
   }, []);
 
   // Effect to handle incoming navigation params
   useEffect(() => {
     if (route.params?.diningHallName) {
       setActiveHallName(route.params.diningHallName);
-      setCommentModalVisible(true);
+      // Only set modal visible if we're navigating directly to create a post
+      if (route.params?.openModal === true) {
+        setPostModalVisible(true);
+      }
       
       // Clear the param after using it to prevent reopening on navigation
-      navigation.setParams({ diningHallName: undefined });
+      navigation.setParams({ 
+        diningHallName: undefined,
+        openModal: undefined 
+      });
     }
-  }, [route.params?.diningHallName]);
+  }, [route.params?.diningHallName, route.params?.openModal]);
 
-  const fetchComments = async () => {
+  const fetchPosts = async () => {
     try {
       setLoading(true);
       
-      // First fetch comments
-      const { data: commentData, error: commentError } = await supabase
-        .from('dining_comments')
+      // Fetch posts
+      const { data: postData, error: postError } = await supabase
+        .from('posts')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (commentError) {
-        console.error('Error fetching comments:', commentError);
+      if (postError) {
+        console.error('Error fetching posts:', postError);
         return;
       }
       
-      if (!commentData || commentData.length === 0) {
-        setComments([]);
+      if (!postData || postData.length === 0) {
+        setPosts([]);
         return;
       }
       
-      // Then fetch profiles for those comments
-      const userIds = commentData.map(comment => comment.user_id);
+      // Then fetch profiles for the posts
+      const userIds = postData.map(post => post.user_id);
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
@@ -91,24 +108,24 @@ const FeedScreen = () => {
       }
       
       // Create a map of user ids to profiles
-      const profileMap = (profileData || []).reduce((map, profile) => {
+      const profileMap = (profileData || []).reduce((map: any, profile) => {
         map[profile.id] = profile;
         return map;
       }, {});
       
       // Combine the data
-      const commentsWithProfiles = commentData.map(comment => ({
-        ...comment,
-        profiles: profileMap[comment.user_id] || { 
-          username: 'unknown', 
-          full_name: 'Unknown User',
+      const postsWithProfiles = postData.map(post => ({
+        ...post,
+        profiles: profileMap[post.user_id] || { 
+          username: 'username', 
+          full_name: 'Name',
           avatar_url: null
         }
       }));
       
-      setComments(commentsWithProfiles);
+      setPosts(postsWithProfiles);
     } catch (err) {
-      console.error('Error in fetchComments:', err);
+      console.error('Error in fetchPosts:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -117,49 +134,40 @@ const FeedScreen = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchComments();
+    fetchPosts();
   };
 
-  const handleCommentPress = (hallName: string) => {
-    setActiveHallName(hallName);
-    setCommentModalVisible(true);
-  };
-
-  const submitComment = async () => {
-    if (!newComment.trim() || !activeHallName) return;
+  const submitPost = async () => {
+    if (!newPost.trim() && !selectedImage) return;
+    if (!session?.user) return;
     
     try {
       setSubmitting(true);
       
-      const user = supabase.auth.getUser();
-      const userId = (await user).data.user?.id;
-      
-      if (!userId) {
-        console.error('No user ID found');
-        return;
-      }
-      
+      // Create post in the database using the required schema
       const { error } = await supabase
-        .from('dining_comments')
+        .from('posts')
         .insert({
-          user_id: userId,
-          dining_hall_name: activeHallName,
-          content: newComment.trim()
+          body: newPost.trim(),
+          user_id: session.user.id,
+          dining_hall: activeHallName,
+          image_url: selectedImage || null
         });
       
       if (error) {
-        console.error('Error submitting comment:', error);
+        console.error('Error submitting post:', error);
         return;
       }
       
       // Clear the input and close modal
-      setNewComment('');
-      setCommentModalVisible(false);
+      setNewPost('');
+      setSelectedImage(null);
+      setPostModalVisible(false);
       
-      // Refresh comments
-      fetchComments();
+      // Refresh posts
+      fetchPosts();
     } catch (err) {
-      console.error('Error in submitComment:', err);
+      console.error('Error in submitPost:', err);
     } finally {
       setSubmitting(false);
     }
@@ -167,8 +175,8 @@ const FeedScreen = () => {
 
   const formatTimeAgo = (timestamp: string) => {
     const now = new Date();
-    const commentTime = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - commentTime.getTime()) / (1000 * 60));
+    const postTime = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - postTime.getTime()) / (1000 * 60));
     
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}min`;
@@ -180,29 +188,38 @@ const FeedScreen = () => {
     if (diffInDays < 7) return `${diffInDays}d`;
     
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-    return commentTime.toLocaleDateString(undefined, options);
+    return postTime.toLocaleDateString(undefined, options);
   };
 
-  const renderCommentItem = ({ item }: { item: Comment }) => (
-    <View style={styles.commentCard}>
+  const renderPostItem = ({ item }: { item: Post }) => (
+    <View style={styles.postCard}>
       {/* User Info */}
-      <View style={styles.commentHeader}>
+      <View style={styles.postHeader}>
         <View style={styles.userContainer}>
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarFallback}>U</Text>
           </View>
           
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.profiles.full_name || 'User'}</Text>
-            <Text style={styles.userHandle}>@{item.profiles.username || 'username'} · {item.dining_hall_name} Commons</Text>
+            <Text style={styles.userName}>{item.profiles?.full_name || 'Name'}</Text>
+            <Text style={styles.userHandle}>@{item.profiles?.username || 'username'} · {item.dining_hall}</Text>
           </View>
         </View>
         
         <Text style={styles.timeAgo}>{formatTimeAgo(item.created_at)}</Text>
       </View>
       
-      {/* Comment Content */}
-      <Text style={styles.commentContent}>{item.content}</Text>
+      {/* Post Content */}
+      <Text style={styles.postContent}>{item.body}</Text>
+      
+      {/* Post Image (if available) */}
+      {item.image_url && (
+        <Image 
+          source={{ uri: item.image_url }} 
+          style={styles.postImage}
+          resizeMode="cover"
+        />
+      )}
       
       {/* Action Buttons */}
       <View style={styles.actionsContainer}>
@@ -230,21 +247,21 @@ const FeedScreen = () => {
             <Text style={styles.headerTitle}>YOUR FEED</Text>
           </View>
           
-          {/* Comments List */}
+          {/* Posts List */}
           {loading && !refreshing ? (
             <ActivityIndicator size="large" color="#E28D61" style={styles.loader} />
           ) : (
             <FlatList
-              data={comments}
+              data={posts}
               keyExtractor={(item) => item.id}
-              renderItem={renderCommentItem}
+              renderItem={renderPostItem}
               contentContainerStyle={styles.listContent}
               onRefresh={handleRefresh}
               refreshing={refreshing}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No comments yet</Text>
-                  <Text style={styles.emptySubText}>Be the first to comment on a dining hall!</Text>
+                  <Text style={styles.emptyText}>No posts yet</Text>
+                  <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
                 </View>
               }
             />
@@ -252,46 +269,67 @@ const FeedScreen = () => {
         </View>
       </SafeAreaView>
       
-      {/* Comment Modal */}
+      {/* Post Modal */}
       <Modal
-        visible={commentModalVisible}
+        visible={postModalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setCommentModalVisible(false)}
+        onRequestClose={() => setPostModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Comment</Text>
+              <Text style={styles.modalTitle}>New Post</Text>
               <TouchableOpacity 
-                onPress={() => setCommentModalVisible(false)}
+                onPress={() => {
+                  setPostModalVisible(false);
+                  setNewPost('');
+                  setSelectedImage(null);
+                }}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color="#78716c" />
               </TouchableOpacity>
             </View>
             
-            <Text style={styles.hallNameText}>{activeHallName} Commons</Text>
+            <Text style={styles.hallNameText}>{activeHallName}</Text>
             
             <TextInput
-              style={styles.commentInput}
+              style={styles.postInput}
               placeholder="What's on your mind?"
               placeholderTextColor="#a8a29e"
               multiline
-              value={newComment}
-              onChangeText={setNewComment}
+              value={newPost}
+              onChangeText={setNewPost}
               maxLength={280}
             />
             
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                <TouchableOpacity 
+                  style={styles.removeImageButton}
+                  onPress={() => setSelectedImage(null)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#FF8C29" />
+                </TouchableOpacity>
+              </View>
+            )}
+            
             <View style={styles.modalFooter}>
-              <Text style={styles.charCount}>{newComment.length}/280</Text>
+              <View style={styles.mediaButtons}>
+                <TouchableOpacity style={styles.mediaButton}>
+                  <Ionicons name="image-outline" size={24} color="#FF8C29" />
+                </TouchableOpacity>
+              </View>
+              
               <TouchableOpacity 
                 style={[
                   styles.submitButton, 
-                  (!newComment.trim() || submitting) && styles.disabledButton
+                  (!newPost.trim() && !selectedImage || submitting) && styles.disabledButton
                 ]}
-                onPress={submitComment}
-                disabled={!newComment.trim() || submitting}
+                onPress={submitPost}
+                disabled={(!newPost.trim() && !selectedImage) || submitting}
               >
                 {submitting ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -331,7 +369,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 80,
   },
-  commentCard: {
+  postCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
@@ -342,7 +380,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  commentHeader: {
+  postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -383,10 +421,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#a8a29e',
   },
-  commentContent: {
+  postContent: {
     fontSize: 16,
     lineHeight: 22,
     color: '#44403c',
+    marginBottom: 16,
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
     marginBottom: 16,
   },
   actionsContainer: {
@@ -448,7 +492,7 @@ const styles = StyleSheet.create({
     color: '#fb923c',
     marginBottom: 16,
   },
-  commentInput: {
+  postInput: {
     height: 120,
     borderWidth: 1,
     borderColor: '#e7e5e4',
@@ -458,15 +502,35 @@ const styles = StyleSheet.create({
     color: '#44403c',
     textAlignVertical: 'top',
   },
+  imagePreviewContainer: {
+    position: 'relative',
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 15,
+  },
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 16,
   },
-  charCount: {
-    fontSize: 14,
-    color: '#a8a29e',
+  mediaButtons: {
+    flexDirection: 'row',
+  },
+  mediaButton: {
+    padding: 8,
+    marginRight: 12,
   },
   submitButton: {
     backgroundColor: '#fb923c',

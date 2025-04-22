@@ -357,17 +357,26 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
     try {
       setSubmitting(true);
       
-      // Create post in the database using the required schema
+      // Upload image if selected
+      let imageUrl = null;
+      if (selectedImage) {
+        // Here you would implement image upload to storage
+        // For now, we'll just pretend we have the URL
+        imageUrl = selectedImage;
+      }
+      
+      // Submit comment to database
       const { error } = await supabase
-        .from('posts')
+        .from('dining_comments')
         .insert({
-          body: commentText.trim(),
           user_id: session.user.id,
-          dining_hall: hallName
+          dining_hall_name: hallName,
+          content: commentText.trim(),
+          image_url: imageUrl
         });
       
       if (error) {
-        console.error('Error submitting post:', error);
+        console.error('Error submitting comment:', error);
         return;
       }
       
@@ -377,7 +386,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       setCommentModalVisible(false);
       
       // Navigate to feed to see the posted comment
-      navigation.navigate('Feed', { session });
+      navigation.navigate('Feed', { diningHallName: hallName, session });
       
     } catch (err) {
       console.error('Error in submitComment:', err);
