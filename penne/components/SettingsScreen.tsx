@@ -5,6 +5,7 @@ import { useRoute } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { RouteProp } from '@react-navigation/native'
 import { supabase } from '../lib/supabase'
+import { Alert } from 'react-native'
 
 type SettingsScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>
 

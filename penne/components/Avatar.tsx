@@ -9,12 +9,15 @@ interface Props {
   url: string | null
   onUpload: (filePath: string) => void
   upload: boolean
+  isCircle?: boolean
 }
 
-export default function Avatar({ url, size = 150, onUpload, upload }: Props) {
+export default function Avatar({ url, size = 150, onUpload, upload, isCircle = false }: Props) {
   const [uploading, setUploading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const avatarSize = { height: size, width: size }
+
+  const borderRadius = isCircle ? size / 2 : 20
 
   useEffect(() => {
     if (url) downloadImage(url)
@@ -45,11 +48,11 @@ export default function Avatar({ url, size = 150, onUpload, upload }: Props) {
       setUploading(true)
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Restrict to only images
-        allowsMultipleSelection: false, // Can only select one image
-        allowsEditing: true, // Allows the user to crop / rotate their photo before uploading it
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: false,
+        allowsEditing: true,
         quality: 1,
-        exif: false, // We don't want nor need that data.
+        exif: false,
       })
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -61,7 +64,7 @@ export default function Avatar({ url, size = 150, onUpload, upload }: Props) {
       console.log('Got image', image)
 
       if (!image.uri) {
-        throw new Error('No image uri!') // Realistically, this should never happen, but just in case...
+        throw new Error('No image uri!')
       }
 
       const arraybuffer = await fetch(image.uri).then((res) => res.arrayBuffer())
@@ -96,10 +99,10 @@ export default function Avatar({ url, size = 150, onUpload, upload }: Props) {
         <Image
           source={{ uri: avatarUrl }}
           accessibilityLabel="Avatar"
-          style={[avatarSize, styles.image, { borderRadius: 20 }]}
+          style={[avatarSize, styles.image, { borderRadius }]}
         />
       ) : (
-        <View style={[avatarSize, styles.avatar, styles.noImage, { borderRadius: 20 }]} />
+        <View style={[avatarSize, styles.avatar, styles.noImage, { borderRadius }]} />
       )}
       {upload && (
         <View>
@@ -128,6 +131,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: 'rgb(200, 200, 200)',
-    borderRadius: 5,
   },
 })

@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import CheckerboardBackground from '../components/CheckerboardBackground';
+import Avatar from '../components/Avatar';
 import { Session } from '@supabase/supabase-js';
 
 // Post interface based on the schema from DiningHallDetailScreen
@@ -29,7 +30,7 @@ interface Post {
   profiles?: {
     username: string;
     full_name: string;
-    avatar_url: string;
+    avatar_url: string | null;
   };
 }
 
@@ -191,13 +192,20 @@ const FeedScreen = () => {
     return postTime.toLocaleDateString(undefined, options);
   };
 
-  const renderPostItem = ({ item }: { item: Post }) => (
-    <View style={styles.postCard}>
+  const renderPostItem = ({ item, index }: { item: Post; index: number }) => (
+    <View style={[
+      styles.postCard, 
+      index === 0 ? styles.firstPostCard : styles.regularPostCard
+    ]}>
       {/* User Info */}
       <View style={styles.postHeader}>
         <View style={styles.userContainer}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarFallback}>U</Text>
+            {item.profiles?.avatar_url ? (
+              <Avatar url={item.profiles.avatar_url} size={48} onUpload={() => {}} upload={false} isCircle={true}/>
+            ) : (
+              <Text style={styles.avatarFallback}>U</Text>
+            )}
           </View>
           
           <View style={styles.userInfo}>
@@ -351,12 +359,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 0,
   },
   header: {
     alignItems: 'center',
     marginBottom: 20,
     marginTop: 10,
+    paddingHorizontal: 16,
   },
   headerTitle: {
     fontSize: 42,
@@ -370,15 +380,18 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   postCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: '#fef8f0',
     padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 1,
+    width: '100%',
+  },
+  firstPostCard: {
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    backgroundColor: '#fef8f0',
+  },
+  regularPostCard: {
+    borderRadius: 0,
   },
   postHeader: {
     flexDirection: 'row',
@@ -430,7 +443,7 @@ const styles = StyleSheet.create({
   postImage: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderRadius: 0,
     marginBottom: 16,
   },
   actionsContainer: {
