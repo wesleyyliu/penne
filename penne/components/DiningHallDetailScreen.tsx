@@ -158,6 +158,10 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
         return require('../assets/launder.jpg');
       case 'Kings Court English House':
         return require('../assets/kchech .jpg');
+      case 'Houston Market':
+        return require('../assets/houston.jpg');
+      case '1920 Gourmet Grocer':
+        return require('../assets/grocer.jpg');
       case 'Quaker Kitchen':
       default:
         return require('../assets/quaker_kitchen.jpg');
