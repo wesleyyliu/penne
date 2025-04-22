@@ -16,7 +16,7 @@ AppState.addEventListener('change', (state) => {
   }
 })
 
-export default function Auth() {
+export default function Auth({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,19 +32,8 @@ export default function Auth() {
     setLoading(false)
   }
 
-  async function signUpWithEmail() {
-    setLoading(true)
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    })
-
-    if (error) Alert.alert(error.message)
-    if (!session) Alert.alert('Please check your inbox for email verification!')
-    setLoading(false)
+  function navigateToSignUp() {
+    navigation.navigate('SignUp')
   }
 
   return (
@@ -92,7 +81,7 @@ export default function Auth() {
           
           <View style={styles.signupContainer}>
             <Text style={styles.noAccountText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => signUpWithEmail()}>
+            <TouchableOpacity onPress={() => navigateToSignUp()}>
               <Text style={styles.signupText}>Sign Up</Text>
             </TouchableOpacity>
           </View>

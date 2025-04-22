@@ -1,7 +1,6 @@
 import React from 'react'
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
 import FeedScreen from './screens/FeedScreen';
 import LeaderboardScreen from './screens/LeaderboardScreen';
 import ProfileStack from './screens/ProfileStack';
@@ -9,9 +8,9 @@ import HomeStack from './screens/HomeStack';
 import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import Auth from './components/Auth';
 import { View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AuthStackScreen from './screens/AuthStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,7 +29,11 @@ export default function App() {
   }, []);
 
   if (!(session && session.user)) {
-    return <Auth />;
+    return (
+      <NavigationContainer>
+        <AuthStackScreen />
+      </NavigationContainer>
+    );
   }
 
   return (
