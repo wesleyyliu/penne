@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Modal, Button, ActivityIndicator, StatusBar, TextInput } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Modal, Button, ActivityIndicator, StatusBar, TextInput, Alert, Platform, Animated, PanResponder, Dimensions, LayoutChangeEvent } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { RouteProp } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
@@ -7,6 +7,9 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../screens/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
+
+// Get screen dimensions
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Define types for menu data
 interface MenuItem {
@@ -16,6 +19,12 @@ interface MenuItem {
   dish_downvote: number;
   meal_type: string;
   station: string;
+}
+
+interface DiningHallPhoto {
+  id: string;
+  uri: string;
+  isLocal?: boolean; // Flag to indicate if this is a locally added photo
 }
 
 // Use the RootStackParamList for the route props
@@ -29,6 +38,19 @@ type DiningHallDetailProps = {
 
 const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
   const { hallName, session } = route.params;
+  
+  // Store slider track width
+  const [sliderTrackWidth, setSliderTrackWidth] = useState(270);
+  
+  // Fixed slider constants - these will be updated based on layout
+  const SLIDER_MIN = 25; // Left edge position of slider track
+  const SLIDER_MAX = sliderTrackWidth - 25; // Right edge position based on measured width
+  const SLIDER_RANGE = SLIDER_MAX - SLIDER_MIN;
+  const INITIAL_POSITION = SLIDER_MIN + (SLIDER_RANGE * 0.2); // Start at 20% of the track (for "FOOD POISONING")
+
+  // Update default rating to 2 (food poisoning) to match screenshot
+  const [rating, setRating] = useState(2); // Default rating is 2 (food poisoning)
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,13 +61,85 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
 
   // State for Survey Modal & Rating
   const [surveyVisible, setSurveyVisible] = useState(false);
-  const [rating, setRating] = useState(5); // Default rating is 5
+  const [sliderPosition, setSliderPosition] = useState(INITIAL_POSITION); // Initial position in the middle of slider
+  const [ratingDescription, setRatingDescription] = useState('Tastes like...');
+  const [ratingFeedback, setRatingFeedback] = useState('');
 
   // Comment modal state
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Image capture/selection related state
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [diningHallPhotos, setDiningHallPhotos] = useState<DiningHallPhoto[]>([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Create Animated values for tomato position and scale
+  const tomatoPosition = useRef(new Animated.Value(INITIAL_POSITION)).current;
+  const tomatoScale = useRef(new Animated.Value(1)).current; // Add scale animation
+
+  // Create PanResponder for the tomato slider
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        // When the user starts dragging, make the tomato larger
+        Animated.spring(tomatoScale, {
+          toValue: 1.2, // Scale up by 20%
+          friction: 3,
+          tension: 40,
+          useNativeDriver: false,
+        }).start();
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Calculate new position directly
+        const position = INITIAL_POSITION + gestureState.dx;
+        // Constrain to slider bounds
+        const boundedPosition = Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, position));
+        
+        // Update animated value directly
+        tomatoPosition.setValue(boundedPosition);
+        
+        // Update state variables
+        setSliderPosition(boundedPosition);
+        
+        // Calculate rating based on position
+        const normalizedPosition = (boundedPosition - SLIDER_MIN) / SLIDER_RANGE;
+        const calculatedRating = Math.max(1, Math.min(10, Math.round(normalizedPosition * 9) + 1));
+        
+        // Only update rating if it changed
+        if (calculatedRating !== rating) {
+          setRating(calculatedRating);
+          
+          // Update feedback text
+          if (calculatedRating <= 3) {
+            setRatingFeedback('FOOD POISONING.');
+          } else if (calculatedRating <= 5) {
+            setRatingFeedback('Edible, I guess.');
+          } else if (calculatedRating <= 7) {
+            setRatingFeedback('Pretty decent!');
+          } else if (calculatedRating <= 9) {
+            setRatingFeedback('Delicious!');
+          } else {
+            setRatingFeedback('MICHELIN STAR!');
+          }
+        }
+      },
+      onPanResponderRelease: () => {
+        // Scale the tomato back to normal size
+        Animated.spring(tomatoScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 40,
+          useNativeDriver: false,
+        }).start();
+      },
+    })
+  ).current;
 
   const navigation = useNavigation<DiningHallDetailNavigationProp>();
 
@@ -99,7 +193,54 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
     };
 
     fetchMenuData();
+    fetchDiningHallPhotos();
   }, [hallName]);
+
+  // Function to fetch dining hall photos from Supabase
+  const fetchDiningHallPhotos = async () => {
+    try {
+      setLoadingPhotos(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('dining_hall_photos')
+          .select('id, image_url')
+          .eq('dining_hall_name', hallName)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (error) {
+          // If the table doesn't exist, we'll use default images instead
+          if (error.code === '42P01') {
+            console.log('dining_hall_photos table does not exist, using default images');
+            // Set empty photos array to use default images
+            setDiningHallPhotos([]);
+            return;
+          }
+          throw error;
+        }
+        
+        // Map the data to our local format
+        const photos = data?.map(photo => ({
+          id: photo.id,
+          uri: photo.image_url
+        })) || [];
+        
+        setDiningHallPhotos(photos);
+      } catch (error: any) {
+        // For development/testing, fallback to empty array which will show default images
+        console.error('Error fetching dining hall photos:', error);
+        
+        // If we're in development, just use default images
+        if (__DEV__) {
+          console.log('Development mode: using default images');
+          setDiningHallPhotos([]);
+        }
+      }
+    } finally {
+      setLoadingPhotos(false);
+    }
+  };
 
   // Function to handle upvoting a dish
   const handleUpvote = async (itemId: number) => {
@@ -326,26 +467,175 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
         user_id: session.user.id,
         score: rating
       });
+      
+      // Show success message
+      Alert.alert('Thank you!', `You rated ${hallName} ${rating}/10`, [
+        { text: 'OK', onPress: () => setSurveyVisible(false) }
+      ]);
     } catch (err) {
       console.error('Error handling rating:', err);
+      Alert.alert('Error', 'There was a problem submitting your rating. Please try again.');
     }
   };
+
+  // Use useEffect to set initial position of tomato
+  useEffect(() => {
+    // Set the initial position when the survey becomes visible
+    if (surveyVisible) {
+      const initialRating = 2; // Middle rating (2 out of 10)
+      
+      // Calculate the position for rating 2
+      const initialPosition = SLIDER_MIN + ((initialRating - 1) / 9) * SLIDER_RANGE;
+      
+      // Set the animated value and state
+      tomatoPosition.setValue(initialPosition);
+      setSliderPosition(initialPosition);
+      setRating(initialRating);
+      setRatingFeedback('FOOD POISONING.');
+    }
+  }, [surveyVisible]);
 
   // Function to pick an image from camera roll
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: 'images',
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setSelectedImage(result.assets[0].uri);
+        handleNewPhoto(result.assets[0].uri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to access the photo library. Please try again.');
+    }
+  };
+
+  // Function to take a photo with the camera
+  const takePhoto = async () => {
+    try {
+      // Request camera permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Camera Permission', 'We need camera permission to take photos.');
+        return;
+      }
+      
+      // Check if we're running in a simulator
+      const isSimulator = Platform.OS === 'ios' && parseInt(Platform.Version, 10) >= 13 && !Platform.isPad && !Platform.isTV;
+      
+      if (isSimulator) {
+        Alert.alert(
+          'Simulator Detected', 
+          'Camera is not available in the simulator. Please use the photo library instead.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Use Photo Library', onPress: pickImage }
+          ]
+        );
+        return;
+      }
+      
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        handleNewPhoto(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert(
+        'Camera Error', 
+        'Could not access the camera. Would you like to choose a photo from your library instead?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Use Photo Library', onPress: pickImage }
+        ]
+      );
+    } finally {
+      setPhotoModalVisible(false);
+    }
+  };
+
+  // Function to handle a new photo (taken or selected)
+  const handleNewPhoto = async (uri: string) => {
+    if (!session?.user) {
+      Alert.alert('Login Required', 'You need to be logged in to upload photos.');
+      return;
+    }
+    
+    try {
+      setUploadingPhoto(true);
+      
+      // First add it locally for immediate feedback
+      const newPhotoId = Date.now().toString();
+      const newPhoto: DiningHallPhoto = {
+        id: newPhotoId,
+        uri: uri,
+        isLocal: true
+      };
+      
+      // Add to the beginning of the array
+      setDiningHallPhotos(prevPhotos => [newPhoto, ...prevPhotos]);
+      
+      // For development/testing in simulator, handle the case where we can't properly upload to storage
+      try {
+        // 1. Upload the image to Supabase storage
+        const fileName = `${session.user.id}_${newPhotoId}.jpg`;
+        const filePath = `dining-hall-photos/${fileName}`;
+        
+        // In a real implementation, you would need to convert the URI to a blob/file
+        
+        // 2. Try to insert into dining_comments table instead since we know it exists
+        // This is a workaround for the missing dining_hall_photos table
+        const { error } = await supabase
+          .from('dining_comments')
+          .insert({
+            user_id: session.user.id,
+            dining_hall_name: hallName,
+            content: 'Posted a photo',
+            image_url: uri,
+            created_at: new Date().toISOString()
+          });
+        
+        if (error) {
+          if (error.code === '42P01') {
+            console.log('Storage tables do not exist yet - development mode');
+          } else {
+            throw error;
+          }
+        }
+      } catch (storageError) {
+        console.log('Using local storage mode for development');
+        // In development, we'll keep the local photo without trying to sync with the server
+      }
+      
+      // No need to refresh photos from server since we're displaying locally
+      // The photo is already in the state
+      
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      // For development, don't show the error alert because we're expecting storage upload to fail in simulator
+      if (__DEV__) {
+        console.log('Development mode: keeping local photo despite upload error');
+      } else {
+        Alert.alert('Upload Failed', 'There was an error uploading your photo. Please try again.');
+        
+        // Remove the local photo if the upload failed (in production only)
+        setDiningHallPhotos(prevPhotos => 
+          prevPhotos.filter(photo => !(photo.isLocal && photo.uri === uri))
+        );
+      }
+    } finally {
+      setUploadingPhoto(false);
+      setPhotoModalVisible(false);
     }
   };
 
@@ -395,13 +685,20 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
     }
   };
 
-  // Sample food images for the photos section
-  const foodImages = [
-    getHeaderImage(),
-    getHeaderImage(),
-    getHeaderImage(),
-    getHeaderImage(),
-  ];
+  // Update tomato position when slider width changes
+  useEffect(() => {
+    // Recalculate the position when track width changes
+    const newPosition = SLIDER_MIN + ((rating - 1) / 9) * SLIDER_RANGE;
+    tomatoPosition.setValue(newPosition);
+    setSliderPosition(newPosition);
+  }, [sliderTrackWidth]);
+  
+  // Function to handle slider track layout
+  const handleSliderLayout = (event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    console.log("Slider width:", width);
+    setSliderTrackWidth(width);
+  };
 
   return (
     <View style={styles.container}>
@@ -426,7 +723,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       <View style={styles.actionButtonsGroup}>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={pickImage}
+          onPress={() => setPhotoModalVisible(true)}
         >
           <Ionicons name="camera-outline" size={20} color="#555" />
         </TouchableOpacity>
@@ -438,7 +735,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => navigation.navigate('Feed', { diningHallName: hallName })}
+          onPress={() => setSurveyVisible(true)}
         >
           <Ionicons name="add-outline" size={20} color="#555" />
         </TouchableOpacity>
@@ -460,16 +757,43 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
 
           {/* Photos Section */}
           <Text style={styles.sectionTitle}>Photos from Penne members</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.photoScroll}
-            contentContainerStyle={styles.photoScrollContent}
-          >
-            {foodImages.map((photo, index) => (
-              <Image key={index} source={photo} style={styles.foodPhoto} />
-            ))}
-          </ScrollView>
+          {loadingPhotos ? (
+            <ActivityIndicator color="#FF8C29" style={styles.loader} />
+          ) : (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              style={styles.photoScroll}
+              contentContainerStyle={styles.photoScrollContent}
+            >
+              {diningHallPhotos.length > 0 ? (
+                diningHallPhotos.map((photo) => (
+                  <Image 
+                    key={photo.id} 
+                    source={{ uri: photo.uri }} 
+                    style={[
+                      styles.foodPhoto,
+                      photo.isLocal && styles.localPhoto
+                    ]} 
+                  />
+                ))
+              ) : (
+                // Show default images if no user photos
+                Array(4).fill(0).map((_, index) => (
+                  <Image key={index} source={getHeaderImage()} style={styles.foodPhoto} />
+                ))
+              )}
+              
+              {/* Add Photo button at the end */}
+              <TouchableOpacity 
+                style={styles.addPhotoButton}
+                onPress={() => setPhotoModalVisible(true)}
+              >
+                <Ionicons name="add-circle" size={30} color="#FF8C29" />
+                <Text style={styles.addPhotoText}>Add</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          )}
 
           {/* Menu Section */}
           <Text style={styles.sectionTitle}>Menu</Text>
@@ -542,20 +866,95 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
         </ScrollView>
       </View>
 
-      {/* Rating Modal */}
-      <Modal visible={surveyVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Rate {hallName}</Text>
-            <View style={styles.modalButtons}>
-              <Button title="Cancel" onPress={() => setSurveyVisible(false)} color="red" />
-              <Button
-                title="Submit"
-                onPress={() => {
-                  handleRating();
-                  setSurveyVisible(false);
-                }}
-              />
+      {/* Survey Rating Modal */}
+      <Modal visible={surveyVisible} transparent animationType="fade">
+        <View style={styles.surveyModalOverlay}>
+          <View style={styles.surveyModalContent}>
+            <TouchableOpacity 
+              style={styles.surveyCloseButton}
+              onPress={() => setSurveyVisible(false)}
+            >
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+            
+            <View style={styles.surveyHeader}>
+              <Text style={styles.surveyHallName}>{hallName}</Text>
+            </View>
+            
+            <View style={styles.surveyBody}>
+              <Text style={styles.surveyLabel}>{ratingDescription}</Text>
+              
+              <View style={styles.sliderContainer}>
+                <TouchableOpacity 
+                  activeOpacity={1} 
+                  style={styles.sliderTouchable}
+                  onLayout={handleSliderLayout}
+                  onPress={(event) => {
+                    // Get touch position relative to the slider
+                    const { locationX } = event.nativeEvent;
+                    
+                    // Calculate new position constrained to slider
+                    const newPosition = Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, locationX));
+                    
+                    // Animate to the new position
+                    Animated.spring(tomatoPosition, {
+                      toValue: newPosition,
+                      friction: 7,
+                      tension: 40,
+                      useNativeDriver: false,
+                    }).start();
+                    
+                    // Update state
+                    setSliderPosition(newPosition);
+                    
+                    // Calculate and update rating
+                    const normalizedPosition = (newPosition - SLIDER_MIN) / SLIDER_RANGE;
+                    const calculatedRating = Math.max(1, Math.min(10, Math.round(normalizedPosition * 9) + 1));
+                    setRating(calculatedRating);
+                    
+                    // Update feedback text
+                    if (calculatedRating <= 3) {
+                      setRatingFeedback('FOOD POISONING.');
+                    } else if (calculatedRating <= 5) {
+                      setRatingFeedback('Edible, I guess.');
+                    } else if (calculatedRating <= 7) {
+                      setRatingFeedback('Pretty decent!');
+                    } else if (calculatedRating <= 9) {
+                      setRatingFeedback('Delicious!');
+                    } else {
+                      setRatingFeedback('MICHELIN STAR!');
+                    }
+                  }}
+                >
+                  <View style={styles.sliderTrack} />
+                  
+                  <Animated.View
+                    style={[
+                      styles.tomatoContainer,
+                      { 
+                        left: tomatoPosition,
+                        transform: [{ scale: tomatoScale }],
+                      }
+                    ]}
+                    hitSlop={{ top: 30, bottom: 30, left: 30, right: 30 }}
+                    {...panResponder.panHandlers}
+                  >
+                    <Image 
+                      source={require('../assets/tomato1.png')} 
+                      style={styles.tomatoImage} 
+                    />
+                  </Animated.View>
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.ratingFeedback}>{ratingFeedback}</Text>
+              
+              <TouchableOpacity 
+                style={styles.submitRatingButton}
+                onPress={handleRating}
+              >
+                <Text style={styles.submitRatingText}>SUBMIT</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -615,6 +1014,50 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
                 />
               </View>
             </View>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Photo Select/Capture Modal */}
+      <Modal visible={photoModalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.photoModalContent}>
+            <Text style={styles.modalTitle}>Add Photo</Text>
+            
+            <View style={styles.photoOptions}>
+              <TouchableOpacity 
+                style={styles.photoOptionButton}
+                onPress={takePhoto}
+                disabled={uploadingPhoto}
+              >
+                <View style={styles.photoOptionIcon}>
+                  <Ionicons name="camera" size={32} color="#FF8C29" />
+                </View>
+                <Text style={styles.photoOptionText}>Take Photo</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.photoOptionButton}
+                onPress={pickImage}
+                disabled={uploadingPhoto}
+              >
+                <View style={styles.photoOptionIcon}>
+                  <Ionicons name="images" size={32} color="#FF8C29" />
+                </View>
+                <Text style={styles.photoOptionText}>Choose from Gallery</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {uploadingPhoto && (
+              <ActivityIndicator size="large" color="#FF8C29" style={styles.uploadingIndicator} />
+            )}
+            
+            <Button 
+              title="Cancel" 
+              onPress={() => setPhotoModalVisible(false)} 
+              color="red"
+              disabled={uploadingPhoto}
+            />
           </View>
         </View>
       </Modal>
@@ -727,6 +1170,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 5,
   },
+  localPhoto: {
+    borderWidth: 2,
+    borderColor: '#FF8C29',
+  },
+  addPhotoButton: {
+    width: 90,
+    height: 90,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 140, 41, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: '#FF8C29',
+    borderStyle: 'dashed',
+  },
+  addPhotoText: {
+    color: '#FF8C29',
+    marginTop: 5,
+    fontWeight: '500',
+  },
   // Menu styling
   menuContainer: {
     backgroundColor: '#FFF',
@@ -814,6 +1278,12 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     maxHeight: '70%',
   },
+  photoModalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -869,6 +1339,149 @@ const styles = StyleSheet.create({
   commentButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  photoOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  photoOptionButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 10,
+  },
+  photoOptionIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FEF5E7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  photoOptionText: {
+    color: '#555',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  uploadingIndicator: {
+    marginVertical: 15,
+  },
+  // Survey Modal Styles
+  surveyModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  surveyModalContent: {
+    width: '90%',
+    maxWidth: 400,
+    backgroundColor: '#FAF9F6',
+    borderRadius: 24,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  surveyCloseButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  surveyHeader: {
+    width: '100%',
+    backgroundColor: '#9B9C68',
+    padding: 30,
+    paddingVertical: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  surveyHallName: {
+    color: '#fff',
+    fontSize: 42,
+    fontWeight: '500',
+    fontFamily: 'serif',
+    textAlign: 'center',
+  },
+  surveyBody: {
+    width: '100%',
+    padding: 30,
+    paddingHorizontal: 25,
+    alignItems: 'center',
+  },
+  surveyLabel: {
+    fontSize: 28,
+    fontWeight: '500',
+    color: '#FF8C29',
+    marginBottom: 50,
+    textAlign: 'center',
+  },
+  sliderContainer: {
+    width: '100%',
+    height: 60,
+    justifyContent: 'center',
+    marginBottom: 60,
+    position: 'relative',
+    alignSelf: 'center',
+  },
+  sliderTrack: {
+    width: '100%',
+    height: 12,
+    backgroundColor: '#DBD0E8',
+    borderRadius: 6,
+    marginHorizontal: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  sliderTouchable: {
+    flex: 1,
+    width: '100%',
+    height: 60,
+    justifyContent: 'center',
+    position: 'relative',
+    paddingHorizontal: 25,
+  },
+  tomatoContainer: {
+    position: 'absolute',
+    top: -22,
+    width: 50,
+    height: 50,
+    marginLeft: -25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  tomatoImage: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
+  },
+  ratingFeedback: {
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 60,
+    textAlign: 'center',
+    color: '#EF8354',
+  },
+  submitRatingButton: {
+    backgroundColor: '#FF8C29',
+    paddingVertical: 16,
+    paddingHorizontal: 60,
+    borderRadius: 30,
+    marginBottom: 20,
+  },
+  submitRatingText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
 });
 
