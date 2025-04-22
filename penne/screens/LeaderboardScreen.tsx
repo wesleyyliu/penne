@@ -301,6 +301,7 @@ const styles = StyleSheet.create({
     height: 280, // Increased height to accommodate taller podium
     marginBottom: 20,
     marginTop: 80,
+    marginHorizontal: 10,
   },
   topCard: {
     width: '30%',
@@ -358,6 +359,7 @@ const styles = StyleSheet.create({
   },
   rankingsContainer: {
     paddingBottom: 20,
+    paddingHorizontal: 15,
   },
   rankingRow: {
     flexDirection: 'row',

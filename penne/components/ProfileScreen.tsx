@@ -51,7 +51,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
   useFocusEffect(
     React.useCallback(() => {
-      if (session) getProfile()
+      if (session) {
+        getProfile()
+        fetchStats()
+      }
     }, [session])
   )
 
@@ -62,7 +65,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select(`username, full_name, avatar_url`)
+        .select(`username, full_name, avatar_url, updated_at`)
         .eq('id', session.user.id)
         .single()
 
@@ -75,6 +78,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
         setFullName(data.full_name)
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url)  // Just set the path, Avatar will download it
+        }
+        
+        // Format the created_at date (need to go back and change this to created_at not updated_at)
+        if (data.updated_at) {
+          const date = new Date(data.updated_at)
+          const formattedDate = date.toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+          })
+          setMemberSince(formattedDate)
         }
       }
     } catch (error) {
@@ -301,12 +315,59 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
         ...prev,
         [friendId]: true
       }))
+
+      // After successful friend addition, update the stats by refreshing them
+      fetchStats()
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error adding friend:', error.message)
       }
     } finally {
       setAddingFriend(null)
+    }
+  }
+
+  // New function to fetch user statistics
+  async function fetchStats() {
+    try {
+      if (!session?.user) throw new Error('No user on the session!')
+      
+      // Fetch friend count (follows count)
+      const { data: following, error: followingError } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('following_user_id', session.user.id)
+        
+      if (followingError) throw followingError
+      
+      // Fetch likes count (upvotes on dishes)
+      const { data: likes, error: likesError } = await supabase
+        .from('dish_ratings')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('upvote', true)
+        
+      if (likesError) throw likesError
+      
+      // Fetch dislikes count (downvotes on dishes)
+      const { data: dislikes, error: dislikesError } = await supabase
+        .from('dish_ratings')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('downvote', true)
+        
+      if (dislikesError) throw dislikesError
+      
+      // Update stats with actual counts
+      setStats({
+        friends: following?.length || 0,
+        likes: likes?.length || 0,
+        dislikes: dislikes?.length || 0
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error fetching stats:', error.message)
+      }
     }
   }
 
