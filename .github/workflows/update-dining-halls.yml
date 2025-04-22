@@ -20,6 +20,6 @@ jobs:
       - name: Run script
         run: |
           cd penne  # Navigate to the penne directory
-          npx ts-node scraper/add-dining-halls.ts
+          npx ts-node scraper/scraper.ts
         env:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
