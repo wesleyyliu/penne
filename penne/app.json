@@ -15,6 +15,15 @@
     },
     "android": {
       "package": "com.anonymous.penne"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f042a915-50f3-40e0-b5d8-1c2ea58e5eff"
+      }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/f042a915-50f3-40e0-b5d8-1c2ea58e5eff"
     }
   }
 }
