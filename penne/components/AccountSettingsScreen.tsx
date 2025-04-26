@@ -5,6 +5,7 @@ import { useRoute } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { RouteProp } from '@react-navigation/native'
 import { supabase } from '../lib/supabase'
+import { useFonts } from 'expo-font'
 
 type AccountSettingsScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>
 
@@ -12,6 +13,12 @@ export default function AccountSettingsScreen({ navigation }: { navigation: any 
   const route = useRoute<AccountSettingsScreenRouteProp>()
   const { session } = route.params
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [username, setUsername] = useState('[Username]')
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
 
   useEffect(() => {
     if (session) {
@@ -25,14 +32,19 @@ export default function AccountSettingsScreen({ navigation }: { navigation: any 
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, username')
         .eq('id', session.user.id)
         .single()
 
       if (error) throw error
       
-      if (data?.avatar_url) {
-        downloadImage(data.avatar_url)
+      if (data) {
+        if (data.avatar_url) {
+          downloadImage(data.avatar_url)
+        }
+        if (data.username) {
+          setUsername(data.username)
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -60,7 +72,7 @@ export default function AccountSettingsScreen({ navigation }: { navigation: any 
   const accountOptions = [
     {
       id: 'photo',
-      title: 'Profile photo',
+      title: 'Change profile photo',
       component: (
         <View style={styles.photoPreview}>
           {avatarUrl ? (
@@ -83,7 +95,7 @@ export default function AccountSettingsScreen({ navigation }: { navigation: any 
     {
       id: 'username',
       title: 'Change username',
-      value: '[Username]',
+      value: username,
       screen: 'ChangeUsername'
     },
     {
@@ -126,7 +138,7 @@ export default function AccountSettingsScreen({ navigation }: { navigation: any 
                   {item.value ? <Text style={styles.accountValue}>{item.value}</Text> : null}
                   {item.component}
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#E28D61" />
+                <Ionicons name="chevron-forward" size={24} color="#EC732E" />
               </TouchableOpacity>
             ))}
           </View>
@@ -160,7 +172,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
   },
   mainContent: {
@@ -172,28 +184,23 @@ const styles = StyleSheet.create({
   accountItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
   },
   accountInfo: {
     flex: 1,
   },
   accountTitle: {
     fontSize: 18,
-    fontWeight: '500',
-    color: '#787b46',
+    color: '#857A5B',
     marginBottom: 4,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   accountValue: {
-    fontSize: 16,
-    color: '#9ca3af',
+    fontSize: 14,
+    color: '#AB9D77',
+    fontFamily: 'Kumbh-Sans',
   },
   photoPreview: {
     marginTop: 8,
