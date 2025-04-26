@@ -2,9 +2,13 @@ import React from 'react'
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform } from 'react-native'
 import { useRoute } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { useFonts } from 'expo-font'
 
 export default function PlaceholderSettingsScreen({ navigation, route }: { navigation: any, route: any }) {
   const screenName = route.name || "Settings Screen"
+  const [fontsLoaded] = useFonts({
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
   
   // Format screen name for display
   const getFormattedTitle = () => {
@@ -25,7 +29,7 @@ export default function PlaceholderSettingsScreen({ navigation, route }: { navig
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color="#787b46" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{getFormattedTitle()}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit={true}>{getFormattedTitle()}</Text>
           <View style={{ width: 28 }} />
         </View>
 
@@ -71,7 +75,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
     textAlign: 'center',
     maxWidth: '70%',
@@ -82,7 +86,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   placeholderContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fef8f0',
     borderRadius: 24,
     padding: 30,
     width: '100%',
@@ -92,15 +96,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    marginTop: -200
   },
   placeholderText: {
     fontSize: 18,
-    color: '#787b46',
+    color: '#AB9D77',
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'Kumbh-Sans',
   },
   backButtonLarge: {
-    backgroundColor: '#E28D61',
+    backgroundColor: '#F8AB7F',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
