@@ -29,7 +29,7 @@
           [
             "expo-font",
             {
-              "fonts": ["./assets/fonts/Kumbh-Sans.ttf", "./assets/fonts/Kumbh-Sans-Bold.ttf", "./assets/fonts/GalileoFLF-Bold.ttf", "./assets/fonts/GalileoFLF-Roman.ttf"]
+              "fonts": ["./assets/fonts/Kumbh-Sans.ttf", "./assets/fonts/Kumbh-Sans-Bold.ttf", "./assets/fonts/GalileoFLF-Bold.ttf", "./assets/fonts/GalileoFLF-Roman.ttf", "./assets/fonts/OPTICenturyNova.otf"]
             }
           ]
         ]
