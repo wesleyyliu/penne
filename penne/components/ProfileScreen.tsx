@@ -10,6 +10,8 @@ import { RouteProp } from '@react-navigation/native'
 import { ProfileStackParamList } from '../screens/types'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { useFonts } from 'expo-font';
+import CheckerboardBackground from './CheckerboardBackground'
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Define the props types using the ProfileStackParamList
 type ProfileScreenRouteProp = RouteProp<ProfileStackParamList, 'ViewProfile'>
@@ -379,124 +381,135 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>PROFILE</Text>
-          <TouchableOpacity 
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings', { session })}
-          >
-            <Ionicons name="settings-outline" size={24} color="#787b46" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.mainContent}>
-          {/* PenneCard */}
-          <View style={styles.card}>
-            {/* Top Section - Header */}
-            <View style={styles.cardHeader}>
-              <View style={styles.headerContent}>
-                <Image 
-                  source={require('../assets/234.png')}
-                  style={styles.headerImage}
-                  resizeMode="contain"
-                />
-                <Text style={styles.cardTitle}>PenneCard</Text>
-              </View>
-            </View>
-
-            {/* Middle Section - Photo & Patterns */}
-            <View style={styles.cardMiddle}>
-              <View style={styles.profileImageContainer}>
-                <Avatar
-                  url={avatarUrl}
-                  size={120}
-                  onUpload={(path) => {
-                    setAvatarUrl(path)
-                    updateProfile({ avatar_url: path })
-                  }}
-                  upload={false}
-                />
-              </View>
-
-              <View style={styles.patternContainer}>
-                <View style={styles.patternRow}>
-                  {[...Array(5)].map((_, i) => (
-                    <Image
-                      key={`pattern-top-${i}`}
-                      source={require('../assets/123.png')}
-                      style={styles.patternImage}
-                      resizeMode="contain"
-                    />
-                  ))}
-                </View>
-                <View style={styles.patternRow}>
-                  {[...Array(5)].map((_, i) => (
-                    <Image
-                      key={`pattern-bottom-${i}`}
-                      source={require('../assets/123.png')}
-                      style={styles.patternImage}
-                      resizeMode="contain"
-                    />
-                  ))}
-                </View>
-              </View>
-            </View>
-            
-            {/* Bottom Section - User Info */}
-            <View style={styles.cardBottom}>
-              <View>
-                <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
-                <Text style={styles.userHandle}>@{username || 'username'}</Text>
-              </View>
-              <View style={styles.memberInfo}>
-                <Text style={styles.memberLabel}>Member since:</Text>
-                <Text style={styles.memberDate}>{memberSince}</Text>
-              </View>
-              <View style={styles.cardBottomShadow} />
-            </View>
-          </View>
-
-          {/* Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Ionicons name="people-outline" size={24} color="#fb923c" />
-              <Text style={styles.statLabel}>Friends</Text>
-              <Text style={styles.statValue}>{stats.friends}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statItem}>
-              <Ionicons name="heart-outline" size={24} color="#fb923c" />
-              <Text style={styles.statLabel}>Likes</Text>
-              <Text style={styles.statValue}>{stats.likes}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statItem}>
-              <Ionicons name="thumbs-down-outline" size={24} color="#fb923c" />
-              <Text style={styles.statLabel}>Dislikes</Text>
-              <Text style={styles.statValue}>{stats.dislikes}</Text>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
+    <CheckerboardBackground>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          {/* Header with gradient background */}
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
+              style={styles.headerGradient}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+            <Text style={styles.headerTitle}>PROFILE</Text>
             <TouchableOpacity 
-              style={styles.addFriendsButton}
-              onPress={handleOpenModal}
+              style={styles.settingsButton}
+              onPress={() => navigation.navigate('Settings', { session })}
             >
-              <View style={styles.addIcon}>
-                <Ionicons name="add" size={16} color="#fff" />
+              <Ionicons name="settings-outline" size={24} color="#787b46" />
+            </TouchableOpacity>
+            
+            {/* PenneCard - moved to header */}
+            <View style={styles.card}>
+              {/* Top Section - Header */}
+              <View style={styles.cardHeader}>
+                <View style={styles.headerContent}>
+                  <Image 
+                    source={require('../assets/234.png')}
+                    style={styles.headerImage}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.cardTitle}>PenneCard</Text>
+                </View>
               </View>
-              <Text style={styles.addFriendsText}>Add Friends</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.shareButton}>
-              <Ionicons name="share-outline" size={24} color="#fb923c" />
-            </TouchableOpacity>
+
+              {/* Middle Section - Photo & Patterns */}
+              <View style={styles.cardMiddle}>
+                <View style={styles.profileImageContainer}>
+                  <Avatar
+                    url={avatarUrl}
+                    size={120}
+                    onUpload={(path) => {
+                      setAvatarUrl(path)
+                      updateProfile({ avatar_url: path })
+                    }}
+                    upload={false}
+                  />
+                </View>
+
+                <View style={styles.patternContainer}>
+                  <View style={styles.patternRow}>
+                    {[...Array(5)].map((_, i) => (
+                      <Image
+                        key={`pattern-top-${i}`}
+                        source={require('../assets/123.png')}
+                        style={styles.patternImage}
+                        resizeMode="contain"
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.patternRow}>
+                    {[...Array(5)].map((_, i) => (
+                      <Image
+                        key={`pattern-bottom-${i}`}
+                        source={require('../assets/123.png')}
+                        style={styles.patternImage}
+                        resizeMode="contain"
+                      />
+                    ))}
+                  </View>
+                </View>
+              </View>
+              
+              {/* Bottom Section - User Info */}
+              <View style={styles.cardBottom}>
+                <View>
+                  <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
+                  <Text style={styles.userHandle}>@{username || 'username'}</Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberLabel}>Member since:</Text>
+                  <Text style={styles.memberDate}>{memberSince}</Text>
+                </View>
+                <View style={styles.cardBottomShadow} />
+              </View>
+            </View>
+          </View>
+
+          {/* Content Card */}
+          <View style={styles.contentCard}>
+            <View style={styles.mainContent}>
+              {/* Stats */}
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <Ionicons name="people-outline" size={24} color="#EC732E" />
+                  <Text style={styles.statLabel}>Friends</Text>
+                  <Text style={styles.statValue}>{stats.friends}</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.statItem}>
+                  <Ionicons name="heart-outline" size={24} color="#EC732E" />
+                  <Text style={styles.statLabel}>Likes</Text>
+                  <Text style={styles.statValue}>{stats.likes}</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.statItem}>
+                  <Ionicons name="thumbs-down-outline" size={24} color="#EC732E" />
+                  <Text style={styles.statLabel}>Dislikes</Text>
+                  <Text style={styles.statValue}>{stats.dislikes}</Text>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity 
+                  style={styles.addFriendsButton}
+                  onPress={handleOpenModal}
+                >
+                  <View style={styles.addIcon}>
+                    <Ionicons name="add" size={24} color="#fff" />
+                  </View>
+                  <Text style={styles.addFriendsText}>Add Friends</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.shareButton}>
+                  <Ionicons name="share-outline" size={32} color="white" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
 
       {/* Friend Search Modal */}
       <Modal
@@ -587,21 +600,28 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </CheckerboardBackground>
   )
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fef8f0',
   },
   container: {
     flex: 1,
-    padding: 16,
   },
   mainContent: {
     flex: 1,
+  },
+  contentCard: {
+    backgroundColor: '#fef8f0',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    flex: 1,
+    paddingTop: 40,
+    paddingHorizontal: 30,
+    marginTop: -20,
   },
   card: {
     backgroundColor: '#fff',
@@ -611,8 +631,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginBottom: 24,
     overflow: 'hidden',
+    marginTop: 20,
+    width: '100%',
   },
   cardHeader: {
     backgroundColor: '#827469',
@@ -725,18 +746,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#AA988A',
     fontFamily: 'Kumbh-Sans',
+    marginRight: 25
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: '#fef8f0',
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 3,
+    borderColor: '#ffc4a8',
+    borderWidth: 1,
   },
   statItem: {
     flex: 1,
@@ -744,19 +768,19 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#FF9765',
     marginTop: 4,
     marginBottom: 2,
   },
   statValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#EC732E',
   },
   divider: {
     width: 1,
     height: '100%',
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#ffc4a8',
     marginHorizontal: 16,
   },
   actionButtons: {
@@ -768,8 +792,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fb923c',
-    borderRadius: 12,
+    backgroundColor: '#F8AB7F',
+    borderRadius: 18,
     paddingVertical: 12,
     marginRight: 12,
   },
@@ -780,12 +804,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   addFriendsText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
   shareButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F8AB7F',
     padding: 12,
     borderRadius: 12,
     shadowColor: '#000',
@@ -823,13 +847,20 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     width: '100%',
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
     paddingTop: 10,
     paddingHorizontal: 16,
     position: 'relative',
+    paddingBottom: 70,
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
   },
   settingsButton: {
     position: 'absolute',
