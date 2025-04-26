@@ -48,7 +48,7 @@ export default function Auth({ navigation }: { navigation: any }) {
           <Input
             onChangeText={(text) => setEmail(text)}
             value={email}
-            placeholder="Username"
+            placeholder="Email"
             autoCapitalize={'none'}
             containerStyle={styles.inputField}
             inputStyle={styles.inputText}

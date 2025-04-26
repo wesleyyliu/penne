@@ -55,15 +55,19 @@ export default function App() {
 
             return (
               <View style={{
-                backgroundColor: focused ? '#fed7aa' : 'transparent',
+                backgroundColor: focused ? '#f8a87b' : 'transparent',
                 borderRadius: 12,
                 padding: 5,
-                width: size + 10,
-                height: size + 10,
+                width: size + 24,
+                height: size + 24,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <Ionicons name={iconName} size={size - 2} color={color} />
+                <Ionicons 
+                  name={iconName} 
+                  size={size + 4} 
+                  color={focused ? '#fef3e9' : '#8c8c8c'}
+                />
               </View>
             );
           },
@@ -75,7 +79,7 @@ export default function App() {
             backgroundColor: '#fef8f0',
             borderTopWidth: 0,
             elevation: 0,
-            height: 60,
+            height: 80,
             width: '100%',
             borderRadius: 20,
             marginBottom: 0,
@@ -87,6 +91,8 @@ export default function App() {
             },
             shadowOpacity: 0.8,
             shadowRadius: 5,
+            paddingHorizontal: 30,
+            paddingTop: 5,
           },
           tabBarItemStyle: {
             marginTop: 5,
