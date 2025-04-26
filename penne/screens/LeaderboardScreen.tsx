@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import CheckerboardBackground from '../components/CheckerboardBackground';
+import { useFonts } from 'expo-font';
 
 // Define route params type
 type RouteParams = {
@@ -29,6 +30,13 @@ const LeaderboardScreen = () => {
   const [diningHallRatings, setDiningHallRatings] = useState<DiningHallRating[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
+    'GalileoFLF-Bold': require('../assets/fonts/GalileoFLF-Bold.ttf'),
+    'GalileoFLF-Roman': require('../assets/fonts/GalileoFLF-Roman.ttf'),
+  });
+
 
   // Function to get the letter initial from the dining hall name
   const getInitial = (name: string) => {
@@ -291,7 +299,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 50,
     color: '#7E8B5F', // Green color from the image
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'GalileoFLF-Bold',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },

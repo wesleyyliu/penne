@@ -9,6 +9,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import { RouteProp } from '@react-navigation/native'
 import { ProfileStackParamList } from '../screens/types'
 import { StackNavigationProp } from '@react-navigation/stack'
+import { useFonts } from 'expo-font';
 
 // Define the props types using the ProfileStackParamList
 type ProfileScreenRouteProp = RouteProp<ProfileStackParamList, 'ViewProfile'>
@@ -48,6 +49,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
   const searchTimeout = useRef<NodeJS.Timeout | null>(null)
   // Add new state to track friendships
   const [friendships, setFriendships] = useState<Record<string, boolean>>({})
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
+    'GalileoFLF-Bold': require('../assets/fonts/GalileoFLF-Bold.ttf'),
+    'GalileoFLF-Roman': require('../assets/fonts/GalileoFLF-Roman.ttf'),
+  });
 
   useFocusEffect(
     React.useCallback(() => {
@@ -388,6 +395,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
         <View style={styles.mainContent}>
           {/* PenneCard */}
           <View style={styles.card}>
+            {/* Top Section - Header */}
             <View style={styles.cardHeader}>
               <View style={styles.headerContent}>
                 <Image 
@@ -399,11 +407,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
               </View>
             </View>
 
-            <View style={styles.cardBody}>
+            {/* Middle Section - Photo & Patterns */}
+            <View style={styles.cardMiddle}>
               <View style={styles.profileImageContainer}>
                 <Avatar
                   url={avatarUrl}
-                  size={90}
+                  size={120}
                   onUpload={(path) => {
                     setAvatarUrl(path)
                     updateProfile({ avatar_url: path })
@@ -434,17 +443,19 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
                   ))}
                 </View>
               </View>
-              
-              <View style={styles.userInfo}>
-                <View>
-                  <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
-                  <Text style={styles.userHandle}>@{username || 'username'}</Text>
-                </View>
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberLabel}>Member since:</Text>
-                  <Text style={styles.memberDate}>{memberSince}</Text>
-                </View>
+            </View>
+            
+            {/* Bottom Section - User Info */}
+            <View style={styles.cardBottom}>
+              <View>
+                <Text style={styles.userName}>{fullName || 'First LastName'}</Text>
+                <Text style={styles.userHandle}>@{username || 'username'}</Text>
               </View>
+              <View style={styles.memberInfo}>
+                <Text style={styles.memberLabel}>Member since:</Text>
+                <Text style={styles.memberDate}>{memberSince}</Text>
+              </View>
+              <View style={styles.cardBottomShadow} />
             </View>
           </View>
 
@@ -604,10 +615,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardHeader: {
-    backgroundColor: '#78716c',
+    backgroundColor: '#827469',
     padding: 16,
-    paddingTop: 24,
-    paddingBottom: 24,
   },
   headerContent: {
     flexDirection: 'row',
@@ -618,25 +627,50 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     tintColor: '#fff',
+    marginLeft: 140
   },
   cardTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    marginLeft: -10
   },
-  cardBody: {
-    padding: 24,
-    backgroundColor: '#F3E8FF',
+  cardMiddle: {
+    padding: 0,
+    backgroundColor: '#d5c2d5',
     position: 'relative',
-    minHeight: 160,
+    minHeight: 100,
+  },
+  cardBottom: {
+    backgroundColor: '#e2d5e2',
+    padding: 12,
+    paddingTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    position: 'relative',
+  },
+  cardBottomShadow: {
+    position: 'absolute',
+    bottom: -10,
+    left: 0,
+    right: 0,
+    height: 80,
+    backgroundColor: 'transparent',
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 0,
   },
   profileImageContainer: {
     position: 'absolute',
     left: 24,
     top: 24,
-    width: 90,
-    height: 90,
+    width: 120,
+    height: 120,
     borderRadius: 20,
     backgroundColor: '#fff',
     shadowColor: '#000',
@@ -646,63 +680,51 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: 'hidden',
     zIndex: 2,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  placeholderImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e5e7eb',
-  },
-  userInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    zIndex: 1,
-    marginTop: 100,
-  },
-  userName: {
-    fontSize: 26,
-    fontWeight: '500',
-    color: '#78716c',
-    marginBottom: 4,
-  },
-  userHandle: {
-    fontSize: 18,
-    color: '#78716c',
-  },
-  memberInfo: {
-    alignItems: 'flex-end',
-  },
-  memberLabel: {
-    fontSize: 16,
-    color: '#78716c',
-    marginBottom: 4,
-  },
-  memberDate: {
-    fontSize: 16,
-    color: '#78716c',
-    fontWeight: '500',
+    marginTop: -70
   },
   patternContainer: {
     position: 'absolute',
     left: 130,
-    top: 24,
+    top: 12,
     zIndex: 0,
   },
   patternRow: {
     flexDirection: 'row',
     marginBottom: 8,
     gap: 8,
+    marginLeft: 30
   },
   patternImage: {
     width: 32,
     height: 32,
-    opacity: 0.15,
-    tintColor: '#78716c',
+    tintColor: '#9e889d',
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#83756A',
+    fontFamily: 'Kumbh-Sans-Bold',
+    marginLeft: 15
+  },
+  userHandle: {
+    fontSize: 16,
+    color: '#AA988A',
+    fontFamily: 'Kumbh-Sans',
+    marginLeft: 15,
+    marginTop: -4,
+  },
+  memberInfo: {
+    alignItems: 'flex-end',
+  },
+  memberLabel: {
+    fontSize: 16,
+    color: '#AA988A',
+    fontFamily: 'Kumbh-Sans',
+  },
+  memberDate: {
+    fontSize: 16,
+    color: '#AA988A',
+    fontFamily: 'Kumbh-Sans',
   },
   statsContainer: {
     flexDirection: 'row',

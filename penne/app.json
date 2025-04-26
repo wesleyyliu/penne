@@ -24,6 +24,14 @@
     "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/f042a915-50f3-40e0-b5d8-1c2ea58e5eff"
-    }
+    },
+    "plugins": [
+          [
+            "expo-font",
+            {
+              "fonts": ["./assets/fonts/Kumbh-Sans.ttf", "./assets/fonts/Kumbh-Sans-Bold.ttf", "./assets/fonts/GalileoFLF-Bold.ttf", "./assets/fonts/GalileoFLF-Roman.ttf"]
+            }
+          ]
+        ]
   }
 }

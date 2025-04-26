@@ -18,6 +18,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import CheckerboardBackground from '../components/CheckerboardBackground';
 import Avatar from '../components/Avatar';
 import { Session } from '@supabase/supabase-js';
+import { useFonts } from 'expo-font';
 
 // Post interface based on the schema from DiningHallDetailScreen
 interface Post {
@@ -54,6 +55,12 @@ const FeedScreen = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { session } = route.params || {};
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
+    'GalileoFLF-Bold': require('../assets/fonts/GalileoFLF-Bold.ttf'),
+    'GalileoFLF-Roman': require('../assets/fonts/GalileoFLF-Roman.ttf'),
+  });
 
   useEffect(() => {
     fetchPosts();
@@ -248,6 +255,10 @@ const FeedScreen = () => {
     </View>
   );
 
+  if (!fontsLoaded) {
+    return <ActivityIndicator />;
+  }
+
   return (
     <CheckerboardBackground>
       <SafeAreaView style={styles.safeArea}>
@@ -362,7 +373,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'GalileoFLF-Bold',
     textTransform: 'uppercase',
     paddingBottom: 20,
   },
@@ -411,23 +422,25 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#857a5c',
+    fontSize: 14,
+    color: '#857A5B',
     marginBottom: 2,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   userHandle: {
     fontSize: 14,
-    color: '#ab9e76',
+    color: '#AB9D77',
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   contentContainer: {
     marginTop: 8,
   },
   postContent: {
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#857a5c',
+    fontSize: 14,
+    lineHeight: 16,
+    color: '#857A5B',
     marginBottom: 8,
+    fontFamily: 'Kumbh-Sans',
   },
   postImage: {
     width: '100%',
@@ -443,6 +456,7 @@ const styles = StyleSheet.create({
   timeAgo: {
     fontSize: 14,
     color: '#c1abc0',
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   actionsContainer: {
     flexDirection: 'row',
