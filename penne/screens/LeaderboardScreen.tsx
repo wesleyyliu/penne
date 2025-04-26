@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView, Image } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useRoute } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -48,13 +48,27 @@ const LeaderboardScreen = () => {
   const getPositionColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return '#E28D61'; // First place (Quaker Kitchen color)
+        return '#F8AB7F'; // First place bar color
       case 2:
-        return '#EBA887'; // Second place (Lauder color)
+        return '#FFC4A8'; // Second place bar color
       case 3:
-        return '#CFD0A3'; // Third place (English House color)
+        return '#E1D090'; // Third place bar color
       default:
-        return '#C3B2CD'; // Other positions
+        return '#CFB8CF'; // Purple color for lower positions
+    }
+  };
+
+  // Function to determine circle color
+  const getCircleColor = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return '#EC732E'; // First place circle color
+      case 2:
+        return '#FE9D6D'; // Second place circle color
+      case 3:
+        return '#C8B56F'; // Third place circle color
+      default:
+        return '#BA9CBA'; // Purple circle for lower positions
     }
   };
 
@@ -150,61 +164,185 @@ const LeaderboardScreen = () => {
   return (
     <CheckerboardBackground>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.contentScroll}>
-          <Text style={styles.title}>LEADERBOARD</Text>
-          
-          <View style={styles.contentCard}>
+        <Text style={styles.title}>LEADERBOARD</Text>
+        
+        <View style={styles.contentCard}>
+          <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+            <View style={{ height: 30 }} />
             {/* Top 3 Section */}
             <View style={styles.topThreeContainer}>
-              {/* We'll manually arrange them in podium order: 2nd, 1st, 3rd */}
               {diningHallRatings.length >= 3 && (
                 <>
+                  {/* Background shape that connects all three cards */}
+                  <View style={styles.podiumBackground}>
+                    {/* Shadows first (underneath) */}
+                    {/* Left shadow */}
+                    <View style={[styles.podiumShadow, { 
+                      backgroundColor: '#E4A590', 
+                      left: 0, 
+                      width: '33%',
+                      borderTopLeftRadius: 40,
+                      borderBottomLeftRadius: 40,
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                      bottom: -5,
+                      height: 225,
+                      zIndex: 1,
+                    }]} />
+                    
+                    {/* Middle shadow */}
+                    <View style={[styles.podiumShadow, { 
+                      backgroundColor: '#E28D61', 
+                      left: '33%', 
+                      width: '34%',
+                      borderTopLeftRadius: 40,
+                      borderTopRightRadius: 40,
+                      bottom: -5,
+                      height: 275,
+                      zIndex: 1,
+                    }]} />
+                    
+                    {/* Right shadow */}
+                    <View style={[styles.podiumShadow, { 
+                      backgroundColor: '#D1C07F', 
+                      left: '67%', 
+                      width: '33%',
+                      borderTopRightRadius: 40,
+                      borderBottomRightRadius: 40,
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      bottom: -5,
+                      height: 225,
+                      zIndex: 1,
+                    }]} />
+
+                    {/* Left card */}
+                    <View style={[styles.podiumSection, { 
+                      backgroundColor: getPositionColor(2), 
+                      left: 0, 
+                      width: '31%',
+                      borderTopLeftRadius: 40,
+                      borderBottomLeftRadius: 40,
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                      bottom: 0,
+                      height: 220,
+                      zIndex: 2,
+                    }]} />
+                    
+                    {/* Left connection */}
+                    <View style={[styles.connector, { 
+                      backgroundColor: getPositionColor(2), 
+                      left: '31%', 
+                      width: '2%',
+                      bottom: 0,
+                      height: 220,
+                      zIndex: 2,
+                    }]} />
+                    
+                    {/* Middle card */}
+                    <View style={[styles.podiumSection, { 
+                      backgroundColor: getPositionColor(1), 
+                      left: '33%', 
+                      width: '34%',
+                      borderTopLeftRadius: 40,
+                      borderTopRightRadius: 40,
+                      bottom: 0,
+                      height: 270,
+                      zIndex: 2,
+                    }]} />
+                    
+                    {/* Right connection */}
+                    <View style={[styles.connector, { 
+                      backgroundColor: getPositionColor(3), 
+                      left: '67%', 
+                      width: '2%',
+                      bottom: 0,
+                      height: 220,
+                      zIndex: 2,
+                    }]} />
+                    
+                    {/* Right card */}
+                    <View style={[styles.podiumSection, { 
+                      backgroundColor: getPositionColor(3), 
+                      left: '69%', 
+                      width: '31%',
+                      borderTopRightRadius: 40,
+                      borderBottomRightRadius: 40,
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      bottom: 0,
+                      height: 220,
+                      zIndex: 2,
+                    }]} />
+                  </View>
+
+                  {/* Names at the bottom of each section - positioned to be centered vertically */}
+                  <View style={[styles.hallNameContainer, { left: 0, width: '31%', top: 145 }]}>
+                    <Text style={styles.hallName}>{diningHallRatings[1].dining_hall_name.split(' ').join('\n')}</Text>
+                  </View>
+                  
+                  <View style={[styles.hallNameContainer, { left: '33%', width: '34%', top: 140 }]}>
+                    <Text style={styles.hallName}>{diningHallRatings[0].dining_hall_name}</Text>
+                  </View>
+                  
+                  <View style={[styles.hallNameContainer, { right: 0, width: '31%', top: 150 }]}>
+                    <Text style={styles.hallName}>{diningHallRatings[2].dining_hall_name.split(' ').join('\n')}</Text>
+                  </View>
+
                   {/* 2nd Place (Left) */}
                   <View 
                     key={diningHallRatings[1].dining_hall_name} 
                     style={[
                       styles.topCard,
                       { 
-                        backgroundColor: getPositionColor(2),
-                        height: 210,
-                        marginTop: 40 // Push down to make room for 1st place
+                        backgroundColor: 'transparent',
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: '33%',
+                        zIndex: 2
                       }
                     ]}
                   >
-                    <View style={styles.initialCircle}>
-                      <Text style={styles.initialText}>{getInitial(diningHallRatings[1].dining_hall_name)}</Text>
-                      <View style={styles.rankCircle}>
+                    <View style={styles.circleContainer}>
+                      <View style={[styles.initialCircle, { backgroundColor: getCircleColor(2) }]}>
+                        <Text style={styles.initialText}>{getInitial(diningHallRatings[1].dining_hall_name)}</Text>
+                      </View>
+                      <View style={styles.rankBadge}>
                         <Text style={styles.rankText}>2</Text>
                       </View>
                     </View>
-                    <Text style={styles.hallName}>
-                      {diningHallRatings[1].dining_hall_name}
-                    </Text>
                   </View>
 
-                  {/* 1st Place (Middle/Center) */}
+                  {/* 1st Place (Middle) */}
                   <View 
                     key={diningHallRatings[0].dining_hall_name} 
                     style={[
                       styles.topCard,
                       { 
-                        backgroundColor: getPositionColor(1),
-                        height: 250,
-                        marginTop: 0,
-                        zIndex: 3 // Ensure it's above the others
+                        backgroundColor: 'transparent',
+                        position: 'absolute',
+                        left: '33%',
+                        top: 0,
+                        width: '34%',
+                        zIndex: 3
                       }
                     ]}
                   >
-                    <View style={styles.initialCircle}>
-                      <Text style={styles.crown}>⭐</Text>
-                      <Text style={styles.initialText}>{getInitial(diningHallRatings[0].dining_hall_name)}</Text>
-                      <View style={styles.rankCircle}>
+                    <View style={[styles.circleContainer, { top: -10 }]}>
+                      <View style={styles.starWrapper}>
+                        <View style={[styles.initialCircle, { backgroundColor: getCircleColor(1), width: 90, height: 90, borderRadius: 45 }]}>
+                          <Text style={[styles.initialText, { fontSize: 45 }]}>{getInitial(diningHallRatings[0].dining_hall_name)}</Text>
+                        </View>
+                        <View style={styles.starContainer}>
+                          <Image source={require('../assets/star.png')} style={styles.starImage} />
+                        </View>
+                      </View>
+                      <View style={[styles.rankBadge, { bottom: -18, left: '55%' }]}>
                         <Text style={styles.rankText}>1</Text>
                       </View>
                     </View>
-                    <Text style={styles.hallName}>
-                      {diningHallRatings[0].dining_hall_name}
-                    </Text>
                   </View>
 
                   {/* 3rd Place (Right) */}
@@ -213,25 +351,30 @@ const LeaderboardScreen = () => {
                     style={[
                       styles.topCard,
                       { 
-                        backgroundColor: getPositionColor(3),
-                        height: 190,
-                        marginTop: 60 // Push down more than 2nd place
+                        backgroundColor: 'transparent',
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        width: '33%',
+                        zIndex: 2
                       }
                     ]}
                   >
-                    <View style={styles.initialCircle}>
-                      <Text style={styles.initialText}>{getInitial(diningHallRatings[2].dining_hall_name)}</Text>
-                      <View style={styles.rankCircle}>
+                    <View style={styles.circleContainer}>
+                      <View style={[styles.initialCircle, { backgroundColor: getCircleColor(3) }]}>
+                        <Text style={styles.initialText}>{getInitial(diningHallRatings[2].dining_hall_name)}</Text>
+                      </View>
+                      <View style={styles.rankBadge}>
                         <Text style={styles.rankText}>3</Text>
                       </View>
                     </View>
-                    <Text style={styles.hallName}>
-                      {diningHallRatings[2].dining_hall_name}
-                    </Text>
                   </View>
                 </>
               )}
             </View>
+            
+            {/* Add spacing to push rankings below */}
+            <View style={{ height: 40 }} />
             
             {/* Rest of the rankings */}
             <View style={styles.rankingsContainer}>
@@ -242,17 +385,19 @@ const LeaderboardScreen = () => {
                     key={hall.dining_hall_name} 
                     style={[styles.rankingRow, { backgroundColor: getPositionColor(rank) }]}
                   >
-                    <Text style={styles.rankNumber}>{rank}th</Text>
-                    <View style={styles.rankInitialCircle}>
-                      <Text style={styles.rankInitialText}>{getInitial(hall.dining_hall_name)}</Text>
+                    <Text style={styles.rankPosition}>{rank}th</Text>
+                    <View style={styles.circleAndTextContainer}>
+                      <View style={[styles.rankInitialCircle, { backgroundColor: getCircleColor(rank) }]}>
+                        <Text style={styles.rankInitialText}>{getInitial(hall.dining_hall_name)}</Text>
+                      </View>
+                      <Text style={styles.rankHallName}>{hall.dining_hall_name}</Text>
                     </View>
-                    <Text style={styles.rankHallName}>{hall.dining_hall_name}</Text>
                   </View>
                 );
               })}
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </SafeAreaView>
     </CheckerboardBackground>
   );
@@ -271,6 +416,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 35,
     paddingBottom: 20,
     marginBottom: 20,
+    flex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   container: {
     flex: 1,
@@ -304,52 +455,93 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   topThreeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    height: 280, // Increased height to accommodate taller podium
-    marginBottom: 20,
-    marginTop: 80,
+    height: 250,
+    marginTop: 20,
+    marginBottom: 0,
     marginHorizontal: 10,
+    position: 'relative',
+  },
+  podiumBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 300,
+  },
+  podiumSection: {
+    position: 'absolute',
+  },
+  podiumShadow: {
+    position: 'absolute',
+    zIndex: 1,
+  },
+  connector: {
+    position: 'absolute',
   },
   topCard: {
-    width: '30%',
-    borderRadius: 20,
-    alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingTop: 20,
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  circleContainer: {
+    position: 'absolute',
+    top: 40,
+    alignItems: 'center',
+    width: '100%',
+    zIndex: 10,
   },
   initialCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'white',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    borderWidth: 0,
   },
-  crown: {
+  starWrapper: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+  },
+  starContainer: {
     position: 'absolute',
     top: -15,
-    fontSize: 24,
+    left: 0,
+    backgroundColor: 'transparent',
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  starImage: {
+    width: 45,
+    height: 45,
+    resizeMode: 'contain',
+    transform: [{ rotate: '15deg' }]
   },
   initialText: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'white',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
-  rankCircle: {
+  rankBadge: {
     position: 'absolute',
-    bottom: -5,
-    right: -5,
+    bottom: -10,
+    backgroundColor: '#FFF9EC',
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E28D61',
+    borderWidth: 0,
+    left: '50%',
+    marginLeft: -12,
   },
   rankText: {
     fontSize: 14,
@@ -357,45 +549,61 @@ const styles = StyleSheet.create({
     color: '#E28D61',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
+  hallNameContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+    width: '100%',
+  },
   hallName: {
     color: 'white',
     textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
     paddingHorizontal: 5,
+    lineHeight: 18,
   },
   rankingsContainer: {
     paddingBottom: 20,
     paddingHorizontal: 15,
+    marginTop: 40,
   },
   rankingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 20,
-    marginBottom: 10,
+    borderRadius: 40,
+    marginBottom: 25,
+    height: 76,
+    paddingLeft: 25,
   },
-  rankNumber: {
-    width: 40,
-    fontSize: 16,
-    fontWeight: 'bold',
+  rankPosition: {
+    width: 50,
+    fontSize: 24,
+    fontWeight: '300',
     color: 'white',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'GalileoFLF-Roman',
+    marginRight: 10,
+    opacity: 0.9,
+  },
+  circleAndTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   rankInitialCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'white',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 15,
   },
   rankInitialText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'white',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   rankHallName: {

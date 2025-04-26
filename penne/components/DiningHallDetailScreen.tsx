@@ -890,14 +890,14 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       {/* Survey Rating Modal */}
       <Modal visible={surveyVisible} transparent animationType="fade">
         <View style={styles.surveyModalOverlay}>
+          <TouchableOpacity 
+            style={styles.surveyCloseButton}
+            onPress={() => setSurveyVisible(false)}
+          >
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          
           <View style={styles.surveyModalContent}>
-            <TouchableOpacity 
-              style={styles.surveyCloseButton}
-              onPress={() => setSurveyVisible(false)}
-            >
-              <Ionicons name="close" size={28} color="#fff" />
-            </TouchableOpacity>
-            
             <View style={styles.surveyHeader}>
               <Text style={styles.surveyHallName}>{hallName}</Text>
             </View>
@@ -1398,22 +1398,24 @@ const styles = StyleSheet.create({
   surveyModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    padding: 20,
+    paddingTop: 100,
   },
   surveyModalContent: {
-    width: '90%',
+    width: '100%',
     maxWidth: 400,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: 'transparent',
     borderRadius: 24,
     overflow: 'hidden',
     alignItems: 'center',
   },
   surveyCloseButton: {
     position: 'absolute',
-    top: 20,
+    top: 40,
     right: 20,
-    zIndex: 10,
+    zIndex: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
@@ -1422,44 +1424,57 @@ const styles = StyleSheet.create({
   surveyHeader: {
     width: '100%',
     backgroundColor: '#9B9C68',
-    padding: 30,
+    padding: 20,
     paddingVertical: 25,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 25,
+    marginBottom: 40,
   },
   surveyHallName: {
     color: '#fff',
-    fontSize: 42,
+    fontSize: 36,
     fontWeight: '500',
-    fontFamily: 'serif',
+    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
     textAlign: 'center',
   },
   surveyBody: {
     width: '100%',
-    padding: 30,
-    paddingHorizontal: 25,
+    padding: 15,
+    paddingTop: 15,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
     alignItems: 'center',
+    backgroundColor: '#FAF9F6',
+    borderRadius: 25,
   },
   surveyLabel: {
-    fontSize: 28,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#FF8C29',
-    marginBottom: 50,
+    color: '#E28D61',
+    marginBottom: 15,
     textAlign: 'center',
+  },
+  ratingFeedback: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#E28D61',
   },
   sliderContainer: {
     width: '100%',
-    height: 60,
+    height: 35,
     justifyContent: 'center',
-    marginBottom: 60,
+    marginBottom: 15,
     position: 'relative',
     alignSelf: 'center',
   },
   sliderTrack: {
     width: '100%',
-    height: 12,
-    backgroundColor: '#DBD0E8',
-    borderRadius: 6,
+    height: 14,
+    backgroundColor: '#C8B8D8',
+    borderRadius: 7,
     marginHorizontal: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -1473,42 +1488,35 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     position: 'relative',
-    paddingHorizontal: 25,
+    paddingHorizontal: 5,
   },
   tomatoContainer: {
     position: 'absolute',
-    top: -22,
-    width: 50,
-    height: 50,
-    marginLeft: -25,
+    top: -3,
+    width: 40,
+    height: 40,
+    marginLeft: -20,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   tomatoImage: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     resizeMode: 'contain',
   },
-  ratingFeedback: {
-    fontSize: 28,
-    fontWeight: '600',
-    marginBottom: 60,
-    textAlign: 'center',
-    color: '#EF8354',
-  },
   submitRatingButton: {
-    backgroundColor: '#FF8C29',
-    paddingVertical: 16,
-    paddingHorizontal: 60,
-    borderRadius: 30,
-    marginBottom: 20,
+    backgroundColor: '#F8AB7F',
+    paddingVertical: 8,
+    paddingHorizontal: 25,
+    borderRadius: 20,
+    marginBottom: 5,
   },
   submitRatingText: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: 11,
     fontWeight: '600',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
 });
 

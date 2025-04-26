@@ -9,6 +9,9 @@ import * as ImagePicker from 'expo-image-picker'
 
 type ChangePhotoScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>
 
+// Import the imageCache if it's not exported from Avatar.tsx
+const imageCache = new Map<string, string>();
+
 export default function ChangePhotoScreen({ navigation }: { navigation: any }) {
   const route = useRoute<ChangePhotoScreenRouteProp>()
   const { session } = route.params
@@ -48,6 +51,19 @@ export default function ChangePhotoScreen({ navigation }: { navigation: any }) {
 
   async function downloadImage(path: string) {
     try {
+      // Check if the image is already in cache
+      if (imageCache.has(path)) {
+        setAvatarUrl(imageCache.get(path) || '');
+        return;
+      }
+      
+      // If the url already contains base64 data, use it directly
+      if (path.startsWith('data:')) {
+        setAvatarUrl(path);
+        imageCache.set(path, path);
+        return;
+      }
+
       const { data, error } = await supabase.storage.from('avatars').download(path)
 
       if (error) {
@@ -57,7 +73,10 @@ export default function ChangePhotoScreen({ navigation }: { navigation: any }) {
       const fr = new FileReader()
       fr.readAsDataURL(data)
       fr.onload = () => {
-        setAvatarUrl(fr.result as string)
+        const dataUrl = fr.result as string;
+        setAvatarUrl(dataUrl);
+        // Cache the image URL to avoid downloading again
+        imageCache.set(path, dataUrl);
       }
     } catch (error) {
       console.error('Error downloading image:', error)
@@ -73,7 +92,9 @@ export default function ChangePhotoScreen({ navigation }: { navigation: any }) {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: false,
         allowsEditing: true,
-        quality: 1,
+        quality: 0.4, // More aggressive compression
+        maxWidth: 500, // Limit dimensions
+        maxHeight: 500,
         aspect: [1, 1],
         exif: false,
       })
