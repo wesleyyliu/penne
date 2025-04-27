@@ -653,15 +653,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
     
     try {
       setSubmitting(true);
-      
-      // Upload image if selected
-      let imageUrl = null;
-      if (selectedImage) {
-        // Here you would implement image upload to storage
-        // For now, we'll just use the selected image URI
-        imageUrl = selectedImage;
-      }
-      
+
       // Check if dining_comments table exists, if not fall back to posts
       try {
         console.log('Attempting to submit comment to database...');
@@ -673,7 +665,6 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
             user_id: session.user.id,
             body: commentText.trim(),
             dining_hall: hallName,
-            // image_url: imageUrl
           });
         
         if (error) {
@@ -1016,21 +1007,12 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
             )}
             
             <View style={styles.commentActions}>
-              <TouchableOpacity 
-                style={styles.imagePickerButton}
-                onPress={pickImage}
-              >
-                <Ionicons name="image-outline" size={24} color="#FF8C29" />
-                <Text style={styles.imagePickerText}>Add Photo</Text>
-              </TouchableOpacity>
-              
               <View style={styles.commentButtons}>
                 <Button 
                   title="Cancel" 
                   onPress={() => {
                     setCommentModalVisible(false);
                     setCommentText('');
-                    setSelectedImage(null);
                   }} 
                   color="red" 
                 />
