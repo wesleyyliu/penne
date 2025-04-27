@@ -19,6 +19,7 @@ import CheckerboardBackground from '../components/CheckerboardBackground';
 import Avatar from '../components/Avatar';
 import { Session } from '@supabase/supabase-js';
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Post interface based on the schema from DiningHallDetailScreen
 interface Post {
@@ -58,8 +59,7 @@ const FeedScreen = () => {
   const [fontsLoaded] = useFonts({
     'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
     'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
-    'GalileoFLF-Bold': require('../assets/fonts/GalileoFLF-Bold.ttf'),
-    'GalileoFLF-Roman': require('../assets/fonts/GalileoFLF-Roman.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
   });
 
   useEffect(() => {
@@ -199,60 +199,75 @@ const FeedScreen = () => {
     return postTime.toLocaleDateString(undefined, options);
   };
 
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <LinearGradient
+        colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
+        style={styles.headerGradient}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      />
+      <Text style={styles.headerTitle}>YOUR FEED</Text>
+    </View>
+  );
+
   const renderPostItem = ({ item, index }: { item: Post; index: number }) => (
-    <View style={[
-      styles.postCard, 
-      index === 0 ? styles.firstPostCard : styles.regularPostCard
-    ]}>
-      {/* User Info */}
-      <View style={styles.postHeader}>
-        <View style={styles.avatarContainer}>
-          {item.profiles?.avatar_url ? (
-            <Avatar url={item.profiles.avatar_url} size={48} onUpload={() => {}} upload={false} isCircle={true}/>
-          ) : (
-            <Text style={styles.avatarFallback}>U</Text>
-          )}
-        </View>
-        
-        <View style={styles.userInfoColumn}>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.profiles?.full_name || 'Name'}</Text>
-            <Text style={styles.userHandle}>@{item.profiles?.username || 'username'} · {item.dining_hall}</Text>
+    <>
+      <View style={[
+        styles.postCard, 
+        index === 0 ? styles.firstPostCard : styles.regularPostCard
+      ]}>
+        {/* User Info */}
+        <View style={styles.postHeader}>
+          <View style={styles.avatarContainer}>
+            {item.profiles?.avatar_url ? (
+              <Avatar url={item.profiles.avatar_url} size={48} onUpload={() => {}} upload={false} isCircle={true}/>
+            ) : (
+              <Text style={styles.avatarFallback}>U</Text>
+            )}
           </View>
           
-          {/* Post Content - Aligned with name */}
-          <View style={styles.contentContainer}>
-            <Text style={styles.postContent}>{item.body}</Text>
-          </View>
-          
-          {/* Footer with timestamp and actions */}
-          <View style={styles.postFooter}>
-            <Text style={styles.timeAgo}>{formatTimeAgo(item.created_at)}</Text>
+          <View style={styles.userInfoColumn}>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{item.profiles?.full_name || 'Name'}</Text>
+              <Text style={styles.userHandle}>@{item.profiles?.username || 'username'} · {item.dining_hall}</Text>
+            </View>
             
-            <View style={styles.actionsContainer}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="heart-outline" size={22} color="#c1abc0" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="chatbubble-outline" size={20} color="#c1abc0" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="arrow-redo-outline" size={22} color="#c1abc0" />
-              </TouchableOpacity>
+            {/* Post Content - Aligned with name */}
+            <View style={styles.contentContainer}>
+              <Text style={styles.postContent}>{item.body}</Text>
+            </View>
+            
+            {/* Footer with timestamp and actions */}
+            <View style={styles.postFooter}>
+              <Text style={styles.timeAgo}>{formatTimeAgo(item.created_at)}</Text>
+              
+              <View style={styles.actionsContainer}>
+                <TouchableOpacity style={styles.actionButton}>
+                  <Ionicons name="heart-outline" size={22} color="#c1abc0" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionButton}>
+                  <Ionicons name="chatbubble-outline" size={20} color="#c1abc0" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionButton}>
+                  <Ionicons name="arrow-redo-outline" size={22} color="#c1abc0" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
+        
+        {/* Post Image (if available) */}
+        {item.image_url && (
+          <Image 
+            source={{ uri: item.image_url }} 
+            style={styles.postImage}
+            resizeMode="cover"
+          />
+        )}
       </View>
-      
-      {/* Post Image (if available) */}
-      {item.image_url && (
-        <Image 
-          source={{ uri: item.image_url }} 
-          style={styles.postImage}
-          resizeMode="cover"
-        />
-      )}
-    </View>
+      {index < posts.length - 1 && <View style={styles.divider} />}
+    </>
   );
 
   if (!fontsLoaded) {
@@ -263,21 +278,21 @@ const FeedScreen = () => {
     <CheckerboardBackground>
       <SafeAreaView style={styles.safeArea}>
         <FlatList
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>YOUR FEED</Text>
-            </View>
-          }
           data={posts}
           keyExtractor={(item) => item.id}
           renderItem={renderPostItem}
           contentContainerStyle={styles.listContent}
           onRefresh={handleRefresh}
           refreshing={refreshing}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={<View style={styles.listFooter} />}
+          style={styles.flatList}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No posts yet</Text>
-              <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
+            <View style={styles.contentCard}>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No posts yet</Text>
+                <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
+              </View>
             </View>
           }
         />
@@ -363,22 +378,92 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
+  container: {
+    flex: 1,
+  },
+  // Header styles
+  headerContainer: {
+    width: '100%',
     alignItems: 'center',
-    paddingVertical: 20,
+    justifyContent: 'center',
+    paddingTop: 10,
     paddingHorizontal: 16,
+    position: 'relative',
+    paddingBottom: 30,
+    zIndex: 1,
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
   },
   headerTitle: {
     fontSize: 42,
     fontWeight: '500',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: 'GalileoFLF-Bold',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
-    paddingBottom: 20,
+    marginBottom: 20,
+    marginTop: 10,
   },
+  headerContent: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    marginTop: 15,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 5,
+  },
+  logoText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#838c58',
+    fontFamily: 'GalileoFLF-Bold',
+  },
+  dateContainer: {
+    alignItems: 'flex-end',
+  },
+  dayNameText: {
+    fontSize: 30,
+    fontWeight: '500',
+    color: '#a4a985',
+    textAlign: 'right',
+    fontFamily: 'GalileoFLF-Bold',
+  },
+  monthDayText: {
+    fontSize: 30,
+    fontWeight: '500',
+    color: '#c9bd8b',
+    textAlign: 'right',
+    fontFamily: 'GalileoFLF-Bold',
+  },
+  // Updated FlatList content styles
   listContent: {
     paddingBottom: 80,
+    flexGrow: 1,
+    backgroundColor: '#fef8f0',
+  },
+  contentCard: {
+    backgroundColor: '#fef8f0',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 0,
+    marginTop: -20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: 300,
   },
   postCard: {
     backgroundColor: '#fef8f0',
@@ -388,9 +473,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   firstPostCard: {
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
     backgroundColor: '#fef8f0',
+    paddingTop: 30,
+    marginTop: -20,
   },
   regularPostCard: {
     borderRadius: 0,
@@ -569,6 +656,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  listFooter: {
+    height: 10,
+    backgroundColor: '#fef8f0',
+  },
+  flatList: {
+    backgroundColor: '#fef8f0',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#857A5B',
+    width: '100%',
+    alignSelf: 'center',
+    marginVertical: 8,
   },
 });
 
