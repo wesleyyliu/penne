@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../screens/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
+import { useFonts } from 'expo-font';
 
 // Get screen dimensions
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -80,6 +81,11 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
   // Create Animated values for tomato position and scale
   const tomatoPosition = useRef(new Animated.Value(INITIAL_POSITION)).current;
   const tomatoScale = useRef(new Animated.Value(1)).current; // Add scale animation
+
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
 
   // Create PanResponder for the tomato slider
   const panResponder = useRef(
@@ -752,6 +758,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{hallName}</Text>
             <View style={styles.rankBadge}>
+              <Image source={require('../assets/tomato1.png')} style={styles.rankTomato} />
               <Text style={styles.rankText}>#{rank}</Text>
             </View>
           </View>
@@ -1135,37 +1142,49 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 15,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 32,
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
-    color: '#838c58',
+    fontSize: 40,
+    fontFamily: 'OPTICenturyNova',
+    color: '#848C58',
     fontWeight: '500',
+    marginLeft: 10,
   },
   rankBadge: {
-    backgroundColor: '#F9D7B2',
-    width: 35,
-    height: 35,
-    borderRadius: 18,
+    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+    width: 40,
+    height: 40,
+  },
+  rankTomato: {
+    width: 45,
+    height: 45,
+    resizeMode: 'contain',
+    marginTop: -40
   },
   rankText: {
-    fontSize: 18,
+    position: 'absolute',
+    fontSize: 23,
     fontWeight: 'bold',
-    color: '#FF8C29',
+    color: 'white',
+    fontFamily: 'OPTICenturyNova',
+    zIndex: 1,
+    top: -10,
+    textAlign: 'center',
+    width: '100%',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#FF8C29',
+    fontSize: 15,
+    color: '#FE793E',
     marginTop: 15,
     marginBottom: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 25,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   photoScroll: {
     marginBottom: 15,
@@ -1283,8 +1302,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     marginVertical: 30,
-    color: '#999',
+    color: '#A1977B',
     paddingHorizontal: 20,
+    fontFamily: 'Kumbh-Sans',
   },
   modalContainer: {
     flex: 1,
