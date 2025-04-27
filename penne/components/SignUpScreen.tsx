@@ -21,6 +21,12 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
       Alert.alert('Please fill in all required fields')
       return
     }
+
+    // Validate UPenn email domain
+    if (!email.toLowerCase().endsWith('upenn.edu')) {
+      Alert.alert('Please use a UPenn email address ending with upenn.edu')
+      return
+    }
     
     setLoading(true)
     

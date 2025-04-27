@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     flex: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 3,
     marginTop: -20,
