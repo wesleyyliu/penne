@@ -10,7 +10,9 @@ import {
   Modal,
   ActivityIndicator,
   SafeAreaView,
-  Platform
+  Platform,
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -199,18 +201,6 @@ const FeedScreen = () => {
     return postTime.toLocaleDateString(undefined, options);
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
-        style={styles.headerGradient}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
-      <Text style={styles.headerTitle}>YOUR FEED</Text>
-    </View>
-  );
-
   const renderPostItem = ({ item, index }: { item: Post; index: number }) => (
     <>
       <View style={[
@@ -277,25 +267,53 @@ const FeedScreen = () => {
   return (
     <CheckerboardBackground>
       <SafeAreaView style={styles.safeArea}>
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          renderItem={renderPostItem}
-          contentContainerStyle={styles.listContent}
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
-          ListHeaderComponent={renderHeader}
-          ListFooterComponent={<View style={styles.listFooter} />}
-          style={styles.flatList}
-          ListEmptyComponent={
-            <View style={styles.contentCard}>
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No posts yet</Text>
-                <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
-              </View>
-            </View>
+        <ScrollView 
+          style={styles.mainScroll} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#fb923c']}
+              tintColor="#fb923c"
+            />
           }
-        />
+        >
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
+              style={styles.headerGradient}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+            <Text style={styles.headerTitle}>YOUR FEED</Text>
+          </View>
+          
+          <View style={styles.contentCard}>
+            {loading && !refreshing ? (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#E28D61" />
+              </View>
+            ) : (
+              <FlatList
+                data={posts}
+                keyExtractor={(item) => item.id}
+                renderItem={renderPostItem}
+                contentContainerStyle={styles.listContent}
+                ListFooterComponent={<View style={styles.listFooter} />}
+                style={styles.flatList}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No posts yet</Text>
+                    <Text style={styles.emptySubText}>Be the first to post about a dining hall!</Text>
+                  </View>
+                }
+                nestedScrollEnabled={false}
+                scrollEnabled={false}
+              />
+            )}
+          </View>
+        </ScrollView>
       </SafeAreaView>
       
       {/* Post Modal */}
@@ -456,14 +474,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef8f0',
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
-    paddingHorizontal: 0,
-    marginTop: -20,
+    paddingBottom: 40,
+    paddingTop: 30,
+    flex: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
     elevation: 3,
-    minHeight: 300,
+    marginTop: -20,
+    zIndex: 3,
   },
   postCard: {
     backgroundColor: '#fef8f0',
@@ -670,6 +690,15 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     marginVertical: 8,
+  },
+  mainScroll: {
+    flex: 1,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
   },
 });
 
