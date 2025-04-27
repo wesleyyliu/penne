@@ -54,8 +54,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, route }) => {
   const [fontsLoaded] = useFonts({
     'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
     'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
-    'GalileoFLF-Bold': require('../assets/fonts/GalileoFLF-Bold.ttf'),
-    'GalileoFLF-Roman': require('../assets/fonts/GalileoFLF-Roman.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
   });
 
   useFocusEffect(
@@ -842,7 +841,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
   },
   headerContainer: {

@@ -51,10 +51,15 @@ export default function Auth({ navigation }: { navigation: any }) {
             placeholder="Email"
             autoCapitalize={'none'}
             containerStyle={styles.inputField}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#B8B8B8"
-          />
-          
+            inputStyle={{...styles.inputText, paddingLeft: 15}}
+            inputContainerStyle={{ 
+              borderBottomWidth: 0,
+              height: 50,
+              justifyContent: 'center'
+            }}
+            placeholderTextColor="#C0ABC0"
+         />
+        
           <Input
             onChangeText={(text) => setPassword(text)}
             value={password}
@@ -62,8 +67,13 @@ export default function Auth({ navigation }: { navigation: any }) {
             placeholder="Password"
             autoCapitalize={'none'}
             containerStyle={styles.inputField}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#B8B8B8"
+            inputStyle={{...styles.inputText, paddingLeft: 15}}
+            inputContainerStyle={{ 
+              borderBottomWidth: 0,
+              height: 50,
+              justifyContent: 'center'
+            }}
+            placeholderTextColor="#C0ABC0"
           />
           
           <TouchableOpacity style={styles.forgotPassword}>
@@ -120,14 +130,14 @@ const styles = StyleSheet.create({
   },
   inputField: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#C0ABC0', 
     borderRadius: 50,
     marginVertical: 10,
     paddingHorizontal: 10,
     height: 50,
   },
   inputText: {
-    color: '#333',
+    color: '#C0ABC0',
     fontSize: 16,
   },
   forgotPassword: {
