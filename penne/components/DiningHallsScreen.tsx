@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform, SafeAreaView } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../screens/types';
 import { supabase } from '../lib/supabase';
 import CheckerboardBackground from './CheckerboardBackground';
 import { RouteProp } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type DiningHallsScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -41,6 +43,12 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
   
   // Add state to track card heights
   const [card3Height, setCard3Height] = useState(230);
+
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
   
   // Function to handle text measurement
   const onTextLayout = useCallback((event: any, hallName: string) => {
@@ -248,228 +256,257 @@ const DiningHallsScreen = ({ route }: DiningHallsScreenProps) => {
 
   return (
     <CheckerboardBackground>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>H</Text>
-            <Image
-              source={require('../assets/tomato1.png')}
-              style={styles.logoImage}
-            />
-            <Text style={styles.logoText}>ME</Text>
-          </View>
-          <View style={styles.dateContainer}>
-            <Text style={styles.dayNameText}>{currentDate.dayName}</Text>
-            <Text style={styles.monthDayText}>{currentDate.monthDay}</Text>
-          </View>
-        </View>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+          <View style={styles.container}>
+            {/* Header with gradient background */}
+            <View style={styles.headerContainer}>
+              <LinearGradient
+                colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
+                style={styles.headerGradient}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+              />
 
-        <View style={styles.contentCard}>
-          <Text style={styles.sectionTitle}>Dining Halls</Text>
-
-          <View style={styles.diningHallsGrid}>
-            {/* Top row layout: #1 and #2 stacked on left, #3 on right */}
-            <View style={styles.topLayout}>
-              {/* Left column: Hall #1 and #2 stacked */}
-              <View style={styles.leftColumn}>
-                {diningHalls.length > 0 && (
-                  <TouchableOpacity
-                    style={[
-                      styles.diningHallCard,
-                      styles.hall1Card,
-                      { 
-                        backgroundColor: getPositionColor(1),
-                        height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
-                        shadowColor: getInitialBoxColor(1),
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.5,
-                        shadowRadius: 1,
-                        elevation: 5,
-                        borderBottomWidth: 4,
-                        borderColor: getInitialBoxColor(1),
-                      }
-                    ]}
-                    onPress={() => navigateToDetail(diningHalls[0].dining_hall_name)}
-                  >
-                    <View style={[
-                      styles.hallInitial,
-                      styles.hallInitial1,
-                      { backgroundColor: getInitialBoxColor(1) }
-                    ]}>
-                      <Text style={styles.initialText}>{diningHalls[0].letter}</Text>
-                    </View>
-                    <View style={styles.hallInfo}>
-                      <Text style={[
-                        styles.rankNumber,
-                        { color: getRankNumberColor(1) }
-                      ]}>#1</Text>
-                    </View>
-                    <Text 
-                      style={styles.hallName1}
-                      onLayout={(e) => onTextLayout(e, diningHalls[0]?.dining_hall_name)}
-                      numberOfLines={2}
-                      ellipsizeMode="tail"
-                    >
-                      {diningHalls[0].dining_hall_name}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                {diningHalls.length > 1 && (
-                  <TouchableOpacity
-                    style={[
-                      styles.diningHallCard,
-                      styles.hall2Card,
-                      { 
-                        backgroundColor: getPositionColor(2),
-                        height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
-                        shadowColor: getInitialBoxColor(2),
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.5,
-                        shadowRadius: 1,
-                        elevation: 5,
-                        borderBottomWidth: 4,
-                        borderColor: getInitialBoxColor(2),
-                      }
-                    ]}
-                    onPress={() => navigateToDetail(diningHalls[1].dining_hall_name)}
-                  >
-                    <View style={[
-                      styles.hallInitial,
-                      styles.hallInitial2,
-                      { backgroundColor: getInitialBoxColor(2) }
-                    ]}>
-                      <Text style={styles.initialText}>{diningHalls[1].letter}</Text>
-                    </View>
-                    <View style={styles.hallInfo}>
-                      <Text style={[
-                        styles.rankNumber,
-                        { color: getRankNumberColor(2) }
-                      ]}>#2</Text>
-                    </View>
-                    <Text 
-                      style={styles.hallName2}
-                      onLayout={(e) => onTextLayout(e, diningHalls[1]?.dining_hall_name)}
-                      numberOfLines={2}
-                      ellipsizeMode="tail"
-                    >
-                      {diningHalls[1].dining_hall_name}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Right column: Hall #3 */}
-              <View style={styles.rightColumn}>
-                {diningHalls.length > 2 && (
-                  <TouchableOpacity
-                    style={[
-                      styles.diningHallCard,
-                      styles.hall3Card,
-                      { 
-                        backgroundColor: getPositionColor(3),
-                        shadowColor: getInitialBoxColor(3),
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.5,
-                        shadowRadius: 1,
-                        elevation: 5,
-                        borderBottomWidth: 4,
-                        borderColor: getInitialBoxColor(3),
-                      }
-                    ]}
-                    onPress={() => navigateToDetail(diningHalls[2].dining_hall_name)}
-                    onLayout={onCard3Layout}
-                  >
-                    <View style={[
-                      styles.hallInitial,
-                      styles.hallInitial3,
-                      { backgroundColor: getInitialBoxColor(3) }
-                    ]}>
-                      <Text style={styles.initialText}>{diningHalls[2].letter}</Text>
-                    </View>
-                    <View style={styles.hallInfo3}>
-                      <Text style={[
-                        styles.rankNumber,
-                        { color: getRankNumberColor(3) }
-                      ]}>#3</Text>
-                    </View>
-                    <Text 
-                      style={styles.hallName3}
-                      onLayout={(e) => onTextLayout(e, diningHalls[2]?.dining_hall_name)}
-                      numberOfLines={3}
-                      ellipsizeMode="tail"
-                    >
-                      {diningHalls[2].dining_hall_name}
-                    </Text>
-                  </TouchableOpacity>
-                )}
+              {/* Logo and Date */}
+              <View style={styles.headerContent}>
+                <View style={styles.logoContainer}>
+                  <Text style={styles.logoText}>H</Text>
+                  <Image
+                    source={require('../assets/tomato1.png')}
+                    style={[styles.logoImage, { marginTop: -8 }]}
+                  />
+                  <Text style={styles.logoText}>ME</Text>
+                </View>
+                <View style={styles.dateContainer}>
+                  <Text style={styles.dayNameText}>{currentDate.dayName}</Text>
+                  <Text style={styles.monthDayText}>{currentDate.monthDay}</Text>
+                </View>
               </View>
             </View>
 
-            {/* Remaining dining halls */}
-            {diningHalls.slice(3).map((hall, index) => (
-              <TouchableOpacity
-                key={hall.dining_hall_name}
-                style={[
-                  styles.diningHallCard,
-                  styles.fullWidthCard,
-                  { 
-                    backgroundColor: getPositionColor(index + 4),
-                    shadowColor: getInitialBoxColor(index + 4),
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 1,
-                    elevation: 5,
-                    borderBottomWidth: 4,
-                    borderColor: getInitialBoxColor(index + 4),
-                  }
-                ]}
-                onPress={() => navigateToDetail(hall.dining_hall_name)}
-              >
-                <View style={[
-                  styles.hallInitial,
-                  { backgroundColor: getInitialBoxColor(index + 4) }
-                ]}>
-                  <Text style={styles.initialText}>{hall.letter}</Text>
+            {/* Content Card */}
+            <View style={styles.contentCard}>
+              <Text style={styles.sectionTitle}>Dining Halls</Text>
+
+              <View style={styles.diningHallsGrid}>
+                {/* Top row layout: #1 and #2 stacked on left, #3 on right */}
+                <View style={styles.topLayout}>
+                  {/* Left column: Hall #1 and #2 stacked */}
+                  <View style={styles.leftColumn}>
+                    {diningHalls.length > 0 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.diningHallCard,
+                          styles.hall1Card,
+                          { 
+                            backgroundColor: getPositionColor(1),
+                            height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
+                            borderBottomWidth: 4,
+                            borderColor: getInitialBoxColor(1),
+                          }
+                        ]}
+                        onPress={() => navigateToDetail(diningHalls[0].dining_hall_name)}
+                      >
+                        <View style={[
+                          styles.hallInitial,
+                          styles.hallInitial1,
+                          { backgroundColor: getInitialBoxColor(1) }
+                        ]}>
+                          <Text style={styles.initialText}>{diningHalls[0].letter}</Text>
+                        </View>
+                        <View style={styles.hallInfo}>
+                          <Text style={[
+                            styles.rankNumber,
+                            { color: getRankNumberColor(1) }
+                          ]}>#1</Text>
+                        </View>
+                        <Text 
+                          style={styles.hallName1}
+                          onLayout={(e) => onTextLayout(e, diningHalls[0]?.dining_hall_name)}
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
+                          {diningHalls[0].dining_hall_name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {diningHalls.length > 1 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.diningHallCard,
+                          styles.hall2Card,
+                          { 
+                            backgroundColor: getPositionColor(2),
+                            height: card3Height / 2 - 7.5, // Half of card3's height minus half the gap
+                            borderBottomWidth: 4,
+                            borderColor: getInitialBoxColor(2),
+                          }
+                        ]}
+                        onPress={() => navigateToDetail(diningHalls[1].dining_hall_name)}
+                      >
+                        <View style={[
+                          styles.hallInitial,
+                          styles.hallInitial2,
+                          { backgroundColor: getInitialBoxColor(2) }
+                        ]}>
+                          <Text style={styles.initialText}>{diningHalls[1].letter}</Text>
+                        </View>
+                        <View style={styles.hallInfo}>
+                          <Text style={[
+                            styles.rankNumber,
+                            { color: getRankNumberColor(2) }
+                          ]}>#2</Text>
+                        </View>
+                        <Text 
+                          style={styles.hallName2}
+                          onLayout={(e) => onTextLayout(e, diningHalls[1]?.dining_hall_name)}
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
+                          {diningHalls[1].dining_hall_name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Right column: Hall #3 */}
+                  <View style={styles.rightColumn}>
+                    {diningHalls.length > 2 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.diningHallCard,
+                          styles.hall3Card,
+                          { 
+                            backgroundColor: getPositionColor(3),
+                            borderBottomWidth: 4,
+                            borderColor: getInitialBoxColor(3),
+                          }
+                        ]}
+                        onPress={() => navigateToDetail(diningHalls[2].dining_hall_name)}
+                        onLayout={onCard3Layout}
+                      >
+                        <View style={[
+                          styles.hallInitial,
+                          styles.hallInitial3,
+                          { backgroundColor: getInitialBoxColor(3) }
+                        ]}>
+                          <Text style={styles.initialText}>{diningHalls[2].letter}</Text>
+                        </View>
+                        <View style={styles.hallInfo3}>
+                          <Text style={[
+                            styles.rankNumber,
+                            { color: getRankNumberColor(3) }
+                          ]}>#3</Text>
+                        </View>
+                        <Text 
+                          style={styles.hallName3}
+                          onLayout={(e) => onTextLayout(e, diningHalls[2]?.dining_hall_name)}
+                          numberOfLines={3}
+                          ellipsizeMode="tail"
+                        >
+                          {diningHalls[2].dining_hall_name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-                <Text 
-                  style={styles.hallName}
-                  onLayout={(e) => onTextLayout(e, hall.dining_hall_name)}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {hall.dining_hall_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+
+                {/* Remaining dining halls */}
+                {diningHalls.slice(3).map((hall, index) => (
+                  <TouchableOpacity
+                    key={hall.dining_hall_name}
+                    style={[
+                      styles.diningHallCard,
+                      styles.fullWidthCard,
+                      { 
+                        backgroundColor: getPositionColor(index + 4),
+                        borderBottomWidth: 4,
+                        borderColor: getInitialBoxColor(index + 4),
+                      }
+                    ]}
+                    onPress={() => navigateToDetail(hall.dining_hall_name)}
+                  >
+                    <View style={[
+                      styles.hallInitial,
+                      { backgroundColor: getInitialBoxColor(index + 4) }
+                    ]}>
+                      <Text style={styles.initialText}>{hall.letter}</Text>
+                    </View>
+                    <Text 
+                      style={styles.hallName}
+                      onLayout={(e) => onTextLayout(e, hall.dining_hall_name)}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {hall.dining_hall_name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </CheckerboardBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
-  header: {
+  scrollView: {
+    flex: 1,
+  },
+  headerContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    position: 'relative',
+    paddingBottom: 50,
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  headerTitle: {
+    fontSize: 42,
+    fontWeight: '500',
+    letterSpacing: 2,
+    color: '#787b46',
+    fontFamily: 'OPTICenturyNova',
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  headerContent: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingHorizontal: 10,
+    marginTop: 15,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingBottom: 5,
   },
   logoText: {
     fontSize: 40,
     fontWeight: 'bold',
     color: '#838c58',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
   },
   logoImage: {
     width: 40,
@@ -477,41 +514,44 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   dateContainer: {
-    marginTop: 20,
     alignItems: 'flex-end',
   },
   dayNameText: {
     fontSize: 30,
     fontWeight: '500',
-    color: '#a4a985', // Orange color matching the app's theme
+    color: '#a4a985',
     textAlign: 'right',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
   },
   monthDayText: {
     fontSize: 30,
     fontWeight: '500',
-    color: '#c9bd8b', // Original color
+    color: '#c9bd8b',
     textAlign: 'right',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
   },
   contentCard: {
     backgroundColor: '#fef8f0',
-    borderRadius: 30,
-    marginTop: 20,
-    marginHorizontal: 0,
-    marginBottom: 60,
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    flex: 1,
     padding: 20,
+    paddingTop: 40,
+    marginTop: -20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    paddingBottom: 60,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 17,
     color: '#958967',
     marginBottom: 20,
+    fontFamily: 'Kumbh-Sans-Bold',
+    marginLeft: 10,
+    paddingTop: 10,
   },
   diningHallsGrid: {
     flexDirection: 'column',
@@ -564,11 +604,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 5,
   },
   initialText: {
     fontSize: 36,
     color: 'white',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
+    marginTop: 3,
   },
   hallInfo: {
     position: 'absolute',
@@ -578,7 +620,8 @@ const styles = StyleSheet.create({
   rankNumber: {
     fontSize: 36,
     fontWeight: 'bold',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
+    marginTop: 5,
   },
   hallName: {
     fontSize: 16,
@@ -592,6 +635,8 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     paddingBottom: 10,
     width: '70%',
+    fontFamily: 'Kumbh-Sans-Bold',
+    marginTop: 5,
   },
   hallInitial1: {
     position: 'absolute',
@@ -607,6 +652,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     width: '60%',
     paddingRight: 10,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   hallInitial2: {
     position: 'absolute',
@@ -622,6 +668,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     width: '60%',
     paddingRight: 10,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   hallInitial3: {
     position: 'absolute',
@@ -642,6 +689,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     width: '80%',
     paddingRight: 10,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
 });
 
