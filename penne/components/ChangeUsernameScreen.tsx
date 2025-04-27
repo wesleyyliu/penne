@@ -5,6 +5,7 @@ import { useRoute } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { RouteProp } from '@react-navigation/native'
 import { supabase } from '../lib/supabase'
+import { useFonts } from 'expo-font';
 
 type ChangeUsernameScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>
 
@@ -15,6 +16,10 @@ export default function ChangeUsernameScreen({ navigation }: { navigation: any }
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [currentUsername, setCurrentUsername] = useState('')
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
 
   useEffect(() => {
     if (session) {
@@ -145,7 +150,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
     textAlign: 'center',
     maxWidth: '70%',

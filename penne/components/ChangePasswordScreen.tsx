@@ -5,6 +5,7 @@ import { useRoute } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { RouteProp } from '@react-navigation/native'
 import { supabase } from '../lib/supabase'
+import { useFonts } from 'expo-font';
 
 type ChangePasswordScreenRouteProp = RouteProp<{ params: { session: Session } }, 'params'>
 
@@ -19,6 +20,10 @@ export default function ChangePasswordScreen({ navigation }: { navigation: any }
   const [hideCurrentPassword, setHideCurrentPassword] = useState(true)
   const [hideNewPassword, setHideNewPassword] = useState(true)
   const [hideConfirmPassword, setHideConfirmPassword] = useState(true)
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -183,7 +188,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
     textAlign: 'center',
     maxWidth: '70%',

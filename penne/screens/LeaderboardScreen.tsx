@@ -167,7 +167,7 @@ const LeaderboardScreen = () => {
         <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
           <View style={styles.headerContainer}>
             <LinearGradient
-              colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
+              colors={['rgba(248, 237, 228, 0.3)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
               style={styles.headerGradient}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}

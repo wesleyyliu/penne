@@ -122,16 +122,26 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
           setRating(calculatedRating);
           
           // Update feedback text
-          if (calculatedRating <= 3) {
+          if (calculatedRating === 1) {
             setRatingFeedback('FOOD POISONING.');
-          } else if (calculatedRating <= 5) {
-            setRatingFeedback('Edible, I guess.');
-          } else if (calculatedRating <= 7) {
-            setRatingFeedback('Pretty decent!');
-          } else if (calculatedRating <= 9) {
-            setRatingFeedback('Delicious!');
+          } else if (calculatedRating === 2) {
+            setRatingFeedback('A step up from sewage.');
+          } else if (calculatedRating === 3) {
+            setRatingFeedback('Mediocre munch.');
+          } else if (calculatedRating === 4) {
+            setRatingFeedback('Tastes like regret.');
+          } else if (calculatedRating === 5) {
+            setRatingFeedback('Middle school lunch energy.');
+          } else if (calculatedRating === 6) {
+            setRatingFeedback('I think I\'m into it?');
+          } else if (calculatedRating === 7) {
+            setRatingFeedback('Almost chef behavior.');
+          } else if (calculatedRating === 8) {
+            setRatingFeedback('Certified slapper!');
+          } else if (calculatedRating === 9) {
+            setRatingFeedback('Pennelicious!');
           } else {
-            setRatingFeedback('MICHELIN STAR!');
+            setRatingFeedback('GOD\'S GIFT TO PASTA!');
           }
         }
       },
@@ -932,16 +942,26 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
                     setRating(calculatedRating);
                     
                     // Update feedback text
-                    if (calculatedRating <= 3) {
+                    if (calculatedRating === 1) {
                       setRatingFeedback('FOOD POISONING.');
-                    } else if (calculatedRating <= 5) {
-                      setRatingFeedback('Edible, I guess.');
-                    } else if (calculatedRating <= 7) {
-                      setRatingFeedback('Pretty decent!');
-                    } else if (calculatedRating <= 9) {
-                      setRatingFeedback('Delicious!');
+                    } else if (calculatedRating === 2) {
+                      setRatingFeedback('A step up from sewage.');
+                    } else if (calculatedRating === 3) {
+                      setRatingFeedback('Mediocre munch.');
+                    } else if (calculatedRating === 4) {
+                      setRatingFeedback('Tastes like regret.');
+                    } else if (calculatedRating === 5) {
+                      setRatingFeedback('Middle school lunch energy.');
+                    } else if (calculatedRating === 6) {
+                      setRatingFeedback('I think I\'m into it?');
+                    } else if (calculatedRating === 7) {
+                      setRatingFeedback('Almost chef behavior.');
+                    } else if (calculatedRating === 8) {
+                      setRatingFeedback('Certified slapper!');
+                    } else if (calculatedRating === 9) {
+                      setRatingFeedback('Pennelicious!');
                     } else {
-                      setRatingFeedback('MICHELIN STAR!');
+                      setRatingFeedback('GOD\'S GIFT TO PASTA!');
                     }
                   }}
                 >
@@ -983,7 +1003,7 @@ const DiningHallDetailScreen: React.FC<DiningHallDetailProps> = ({ route }) => {
       <Modal visible={commentModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.commentModalContent}>
-            <Text style={styles.modalTitle}>Add Comment for {hallName}</Text>
+            <Text style={styles.modalTitle}>Comment on {hallName}</Text>
             
             <TextInput
               style={styles.commentInput}
@@ -1112,6 +1132,11 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginTop: -20,
     marginBottom: 0,
+    opacity: 0.95,
+    shadowColor: '#644969',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1.0,
+    shadowRadius: 3.5,
   },
   contentArea: {
     backgroundColor: '#fef8f0',
@@ -1302,7 +1327,7 @@ const styles = StyleSheet.create({
   },
   commentModalContent: {
     width: '90%',
-    backgroundColor: '#fff',
+    backgroundColor: '#FEF8F0',
     padding: 20,
     borderRadius: 15,
     maxHeight: '70%',
@@ -1315,10 +1340,10 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
-    color: '#566D55',
+    color: '#9B9C68',
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -1334,6 +1359,7 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 15,
+    color: '#978d72',
   },
   imagePreviewContainer: {
     position: 'relative',
@@ -1392,6 +1418,7 @@ const styles = StyleSheet.create({
     color: '#555',
     fontWeight: '500',
     textAlign: 'center',
+    fontFamily: 'Kumbh-Sans',
   },
   uploadingIndicator: {
     marginVertical: 15,
@@ -1432,12 +1459,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 25,
     marginBottom: 40,
+    shadowColor: '#565f04',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
   },
   surveyHallName: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    color: '#FEF8F0',
+    fontSize: 40,
+    fontFamily: 'OPTICenturyNova',
     textAlign: 'center',
   },
   surveyBody: {
@@ -1451,18 +1481,19 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   surveyLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#E28D61',
+    fontSize: 18,
+    color: '#EC732E',
     marginBottom: 15,
+    marginTop: 20,
     textAlign: 'center',
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   ratingFeedback: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
     marginBottom: 15,
     textAlign: 'center',
-    color: '#E28D61',
+    color: '#EC732E',
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   sliderContainer: {
     width: '100%',
@@ -1515,10 +1546,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   submitRatingText: {
-    color: '#fff',
+    color: '#FEF8F0',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.5,
+    fontFamily: 'Kumbh-Sans-Bold',
+    paddingTop: 2.5,
   },
 });
 
