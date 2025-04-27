@@ -3,7 +3,7 @@ import { Alert, StyleSheet, View, Image, Text, TouchableOpacity, SafeAreaView, P
 import { supabase } from '../lib/supabase'
 import { Button, Input } from '@rneui/themed'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import CheckerboardBackground from './CheckerboardBackground'
+import { useFonts } from 'expo-font';
 
 export default function SignUpScreen({ navigation }: { navigation: any }) {
   const [fullName, setFullName] = useState('')
@@ -11,6 +11,10 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fontsLoaded] = useFonts({
+    'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
+  });
 
   async function signUpWithEmail() {
     if (!fullName || !username || !email || !password) {
@@ -82,7 +86,7 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
   }
 
   return (
-    <CheckerboardBackground>
+    <View style={styles.mainContainer}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -99,8 +103,13 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
             placeholder="Username"
             autoCapitalize={'none'}
             containerStyle={styles.inputField}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#B8B8B8"
+            inputStyle={{...styles.inputText, paddingLeft: 15}}
+            inputContainerStyle={{ 
+              borderBottomWidth: 0,
+              height: 50,
+              justifyContent: 'center'
+            }}
+            placeholderTextColor="#C0ABC0"
           />
           
           <Input
@@ -109,8 +118,13 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
             placeholder="Email"
             autoCapitalize={'none'}
             containerStyle={styles.inputField}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#B8B8B8"
+            inputStyle={{...styles.inputText, paddingLeft: 15}}
+            inputContainerStyle={{ 
+              borderBottomWidth: 0,
+              height: 50,
+              justifyContent: 'center'
+            }}
+            placeholderTextColor="#C0ABC0"
           />
           
           <View style={styles.nameInputRow}>
@@ -118,9 +132,14 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
               onChangeText={(text) => setFullName(text)}
               value={fullName}
               placeholder="Name"
-              containerStyle={[styles.inputField]}
-              inputStyle={styles.inputText}
-              placeholderTextColor="#B8B8B8"
+              containerStyle={styles.inputField}
+              inputStyle={{...styles.inputText, paddingLeft: 15}}
+              inputContainerStyle={{ 
+                borderBottomWidth: 0,
+                height: 50,
+                justifyContent: 'center'
+              }}
+              placeholderTextColor="#C0ABC0"
             />
           </View>
           
@@ -131,24 +150,33 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
             placeholder="Password"
             autoCapitalize={'none'}
             containerStyle={styles.inputField}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#B8B8B8"
+            inputStyle={{...styles.inputText, paddingLeft: 15}}
+            inputContainerStyle={{ 
+              borderBottomWidth: 0,
+              height: 50,
+              justifyContent: 'center'
+            }}
+            placeholderTextColor="#C0ABC0"
           />
           
           <TouchableOpacity 
-            style={[styles.arrowButton, loading && styles.disabledButton]} 
+            style={styles.submitButton}
             onPress={() => signUpWithEmail()}
             disabled={loading}
           >
-            <Ionicons name="arrow-forward" size={28} color="#787b46" />
+            <Ionicons name="chevron-forward" size={28} color="#787b46" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </CheckerboardBackground>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#fef8f0',
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -165,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     letterSpacing: 2,
     color: '#787b46',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
     textTransform: 'uppercase',
     textAlign: 'center',
   },
@@ -174,19 +202,13 @@ const styles = StyleSheet.create({
   },
   authCard: {
     width: '100%',
-    backgroundColor: '#fef8f0',
-    borderRadius: 30,
-    padding: 30,
+    flex: 1,
     alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingHorizontal: 30,
   },
   inputField: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#C0ABC0', 
     borderRadius: 50,
     marginVertical: 10,
     paddingHorizontal: 10,
@@ -198,20 +220,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inputText: {
-    color: '#333',
+    color: '#C0ABC0',
     fontSize: 16,
   },
-  arrowButton: {
-    backgroundColor: '#f8ab7f',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+  submitButton: {
+    padding: 2,
     marginTop: 20,
     alignSelf: 'flex-end',
-  },
-  disabledButton: {
-    opacity: 0.7,
   },
 })
