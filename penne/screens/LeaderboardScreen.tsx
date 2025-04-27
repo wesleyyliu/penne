@@ -7,6 +7,7 @@ import { Session } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import CheckerboardBackground from '../components/CheckerboardBackground';
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Define route params type
 type RouteParams = {
@@ -33,8 +34,7 @@ const LeaderboardScreen = () => {
   const [fontsLoaded] = useFonts({
     'Kumbh-Sans': require('../assets/fonts/Kumbh-Sans.ttf'),
     'Kumbh-Sans-Bold': require('../assets/fonts/Kumbh-Sans-Bold.ttf'),
-    'GalileoFLF-Bold': require('../assets/fonts/GalileoFLF-Bold.ttf'),
-    'GalileoFLF-Roman': require('../assets/fonts/GalileoFLF-Roman.ttf'),
+    'OPTICenturyNova': require('../assets/fonts/OPTICenturyNova.otf'),
   });
 
 
@@ -164,11 +164,18 @@ const LeaderboardScreen = () => {
   return (
     <CheckerboardBackground>
       <SafeAreaView style={styles.safeArea}>
-        <Text style={styles.title}>LEADERBOARD</Text>
-        
-        <View style={styles.contentCard}>
-          <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
-            <View style={{ height: 30 }} />
+        <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={['rgba(248, 237, 228, 0.7)', 'rgba(248, 237, 228, 1.0)', '#f8ede4']}
+              style={styles.headerGradient}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+            <Text style={styles.headerTitle}>LEADERBOARD</Text>
+          </View>
+          
+          <View style={styles.contentCard}>
             {/* Top 3 Section */}
             <View style={styles.topThreeContainer}>
               {diningHallRatings.length >= 3 && (
@@ -332,14 +339,14 @@ const LeaderboardScreen = () => {
                   >
                     <View style={[styles.circleContainer, { top: -10 }]}>
                       <View style={styles.starWrapper}>
-                        <View style={[styles.initialCircle, { backgroundColor: getCircleColor(1), width: 90, height: 90, borderRadius: 45 }]}>
+                        <View style={[styles.initialCircle, { backgroundColor: getCircleColor(1), width: 90, height: 90, borderRadius: 45, left: -5 }]}>
                           <Text style={[styles.initialText, { fontSize: 45 }]}>{getInitial(diningHallRatings[0].dining_hall_name)}</Text>
                         </View>
                         <View style={styles.starContainer}>
                           <Image source={require('../assets/star.png')} style={styles.starImage} />
                         </View>
                       </View>
-                      <View style={[styles.rankBadge, { bottom: -18, left: '55%' }]}>
+                      <View style={[styles.rankBadge, { bottom: -18, left: '50%' }]}>
                         <Text style={styles.rankText}>1</Text>
                       </View>
                     </View>
@@ -396,8 +403,8 @@ const LeaderboardScreen = () => {
                 );
               })}
             </View>
-          </ScrollView>
-        </View>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </CheckerboardBackground>
   );
@@ -407,21 +414,23 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  contentScroll: {
+  mainScroll: {
     flex: 1,
   },
   contentCard: {
     backgroundColor: '#fef8f0',
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
-    paddingBottom: 20,
-    marginBottom: 20,
+    paddingBottom: 40,
+    paddingTop: 60,
     flex: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+    marginTop: -20,
+    zIndex: 3,
   },
   container: {
     flex: 1,
@@ -450,7 +459,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 50,
     color: '#7E8B5F', // Green color from the image
-    fontFamily: 'GalileoFLF-Bold',
+    fontFamily: 'OPTICenturyNova',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
@@ -509,7 +518,6 @@ const styles = StyleSheet.create({
   starContainer: {
     position: 'absolute',
     top: -15,
-    left: 0,
     backgroundColor: 'transparent',
     width: 45,
     height: 45,
@@ -528,7 +536,8 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: 'bold',
     color: 'white',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
+    paddingTop: 5,
   },
   rankBadge: {
     position: 'absolute',
@@ -547,7 +556,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#E28D61',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
   },
   hallNameContainer: {
     position: 'absolute',
@@ -559,10 +568,10 @@ const styles = StyleSheet.create({
   hallName: {
     color: 'white',
     textAlign: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
     paddingHorizontal: 5,
     lineHeight: 18,
+    fontFamily: 'Kumbh-Sans-Bold',
   },
   rankingsContainer: {
     paddingBottom: 20,
@@ -583,7 +592,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '300',
     color: 'white',
-    fontFamily: 'GalileoFLF-Roman',
+    fontFamily: 'OPTICenturyNova',
     marginRight: 10,
     opacity: 0.9,
   },
@@ -604,12 +613,41 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontFamily: 'OPTICenturyNova',
+    paddingTop: 5,
   },
   rankHallName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
+  },
+  headerContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    position: 'relative',
+    paddingBottom: 30,
+    zIndex: 1,
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  headerTitle: {
+    fontSize: 42,
+    fontWeight: '500',
+    letterSpacing: 2,
+    color: '#787b46',
+    fontFamily: 'OPTICenturyNova',
+    textTransform: 'uppercase',
+    marginBottom: 20,
+    marginTop: 10,
   },
 });
 
